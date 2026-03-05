@@ -84,7 +84,10 @@ export function deData(bufOr2Base64: string | Buffer, key = DATA_AES_KEY) {
   }
 
   // Reverse Base64 #2
-  const base64Once = typeof bufOr2Base64 === "string" ? Buffer.from(bufOr2Base64, "base64").toString("utf8") : bufOr2Base64.toString("utf8");
+  const base64Once =
+    typeof bufOr2Base64 === "string"
+      ? Buffer.from(bufOr2Base64, "base64").toString("utf8")
+      : bufOr2Base64.toString("utf8");
 
   // Reverse Base64 #1
   const ciphertext = Buffer.from(base64Once, "base64");
