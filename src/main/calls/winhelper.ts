@@ -150,21 +150,25 @@ registerCallHandler<[], void>("winhelper.bringWindowToTop", (event) => {
   wnd.focus();
 });
 
-registerCallHandler<[string, boolean, {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}], void>(
-  "winhelper.setNativeWindowShow",
-  () => {
-    // Params:
-    // - id: string
-    // - show: boolean
-    // - rect
-    return;
-  }
-);
+registerCallHandler<
+  [
+    string,
+    boolean,
+    {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    },
+  ],
+  void
+>("winhelper.setNativeWindowShow", () => {
+  // Params:
+  // - id: string
+  // - show: boolean
+  // - rect
+  return;
+});
 
 type WindowDimensions = {
   factor: number;

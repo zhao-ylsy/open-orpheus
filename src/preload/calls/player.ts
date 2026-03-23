@@ -54,17 +54,25 @@ registerCallHandler<[string], [boolean]>("player.setCover", () => {
   return [true];
 });
 
-registerCallHandler<[number /* 0 or 1? */], [boolean]>("player.setLikeMark", () => {
-  return [true];
-});
+registerCallHandler<[number /* 0 or 1? */], [boolean]>(
+  "player.setLikeMark",
+  () => {
+    return [true];
+  }
+);
 
 registerCallHandler<[number], [boolean]>("player.setTotalTime", () => {
   return [true];
 });
 
-registerCallHandler<[{
-  playstate: number; // 0 or 1?
-}], [boolean]>("player.setMiniPlayerState", () => {
+registerCallHandler<
+  [
+    {
+      playstate: number; // 0 or 1?
+    },
+  ],
+  [boolean]
+>("player.setMiniPlayerState", () => {
   return [true];
 });
 
@@ -78,41 +86,56 @@ registerCallHandler<[boolean], [boolean]>("player.setLineMode", () => {
   return [true];
 });
 
-registerCallHandler<[boolean], [boolean]>("player.setDesktopLyricTopMost", () => {
-  return [true];
-});
+registerCallHandler<[boolean], [boolean]>(
+  "player.setDesktopLyricTopMost",
+  () => {
+    return [true];
+  }
+);
 
 registerCallHandler<[string], [boolean]>("player.setTranslateLyric", () => {
   // "translate" ...?
   return [true];
 });
 
-registerCallHandler<[string, string, string, string], [boolean]>("player.setLRCColor", () => {
-  // rrggbb
-  // notplayed, played
-  // top to bottom for each state
-  return [true];
-});
+registerCallHandler<[string, string, string, string], [boolean]>(
+  "player.setLRCColor",
+  () => {
+    // rrggbb
+    // notplayed, played
+    // top to bottom for each state
+    return [true];
+  }
+);
 
-registerCallHandler<[string, string], [boolean]>("player.setOutlineColor", () => {
-  // notplayed, played
-  return [true];
-});
+registerCallHandler<[string, string], [boolean]>(
+  "player.setOutlineColor",
+  () => {
+    // notplayed, played
+    return [true];
+  }
+);
 
-registerCallHandler<[boolean, boolean, boolean, boolean], [boolean]>("player.setOutlineShadow", () => {
-  // On: true true false false
-  // Off: false false false false
-  return [true];
-});
+registerCallHandler<[boolean, boolean, boolean, boolean], [boolean]>(
+  "player.setOutlineShadow",
+  () => {
+    // On: true true false false
+    // Off: false false false false
+    return [true];
+  }
+);
 
 registerCallHandler<[boolean], [boolean]>("player.setHorizontalLyric", () => {
   return [true];
 });
 
-registerCallHandler<[string, string, string], [boolean]>("player.setLRCFont", () => {
-  // font size, bold (1 or 0), font name
-  return [true];
-});
+registerCallHandler<[string, string, string], [boolean]>(
+  "player.setLRCFont",
+  () => {
+    // font size, bold (1 or 0), font name
+    return [true];
+  }
+);
 
 registerCallHandler<[boolean], [boolean]>("player.setLock", () => {
   return [true];
@@ -122,14 +145,19 @@ registerCallHandler<[string], [boolean]>("player.setLRCSlogan", () => {
   return [true];
 });
 
-registerCallHandler<[{
-  krc: string;
-  lrc: string;
-  romalrc: string;
-  tlrc: string;
-  yrc: string;
-  // No lyric = empty string
-}], [boolean]>("player.setLyrics", () => {
+registerCallHandler<
+  [
+    {
+      krc: string;
+      lrc: string;
+      romalrc: string;
+      tlrc: string;
+      yrc: string;
+      // No lyric = empty string
+    },
+  ],
+  [boolean]
+>("player.setLyrics", () => {
   return [true];
 });
 
