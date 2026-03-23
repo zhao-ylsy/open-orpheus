@@ -96,14 +96,20 @@ player.audio.addEventListener("playing", () => {
   notifyBuffering(false);
 });
 
-player.audio.addEventListener("timeupdate", () => {
+const onPlayProgress = () => {
+  const bufferProgress = player.audio.buffered.length
+    ? player.audio.buffered.end(player.audio.buffered.length - 1) /
+      player.audio.duration
+    : 0;
   fireNativeCall(
     "audioplayer.onPlayProgress",
     player.currentId,
     player.audio.currentTime,
-    1 // TODO: Buffer progress
+    bufferProgress
   );
-});
+};
+player.audio.addEventListener("timeupdate", onPlayProgress);
+player.audio.addEventListener("progress", onPlayProgress);
 
 player.audio.addEventListener("volumechange", () => {
   fireNativeCall(
