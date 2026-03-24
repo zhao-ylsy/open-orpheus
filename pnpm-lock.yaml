@@ -8,13 +8,25 @@ importers:
 
   .:
     dependencies:
-      electron-squirrel-startup:
-        specifier: ^1.0.1
-        version: 1.0.1
-    devDependencies:
       7z-wasm:
         specifier: ^1.2.0
         version: 1.2.0
+      '@open-orpheus/database':
+        specifier: workspace:*
+        version: link:modules/database
+      '@open-orpheus/ui':
+        specifier: workspace:*
+        version: link:modules/ui
+      '@open-orpheus/window':
+        specifier: workspace:*
+        version: link:modules/window
+      electron-squirrel-startup:
+        specifier: ^1.0.1
+        version: 1.0.1
+      font-list:
+        specifier: ^2.0.2
+        version: 2.0.2
+    devDependencies:
       '@electron-forge/cli':
         specifier: ^7.11.1
         version: 7.11.1(encoding@0.1.13)
@@ -45,15 +57,6 @@ importers:
       '@eslint/js':
         specifier: ^9.39.4
         version: 9.39.4
-      '@open-orpheus/database':
-        specifier: workspace:*
-        version: link:modules/database
-      '@open-orpheus/ui':
-        specifier: workspace:*
-        version: link:modules/ui
-      '@open-orpheus/window':
-        specifier: workspace:*
-        version: link:modules/window
       '@types/electron-squirrel-startup':
         specifier: ^1.0.2
         version: 1.0.2
@@ -87,9 +90,6 @@ importers:
       eslint-plugin-svelte:
         specifier: ^3.15.2
         version: 3.15.2(eslint@9.39.4(jiti@2.6.1))(svelte@5.54.0)
-      font-list:
-        specifier: ^2.0.2
-        version: 2.0.2
       globals:
         specifier: ^17.4.0
         version: 17.4.0
@@ -1545,8 +1545,8 @@ packages:
   base64-js@1.5.1:
     resolution: {integrity: sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==}
 
-  baseline-browser-mapping@2.10.9:
-    resolution: {integrity: sha512-OZd0e2mU11ClX8+IdXe3r0dbqMEznRiT4TfbhYIbcRPZkqJ7Qwer8ij3GZAmLsRKa+II9V1v5czCkvmHH3XZBg==}
+  baseline-browser-mapping@2.10.10:
+    resolution: {integrity: sha512-sUoJ3IMxx4AyRqO4MLeHlnGDkyXRoUG0/AI9fjK+vS72ekpV0yWVY7O0BVjmBcRtkNcsAO2QDZ4tdKKGoI6YaQ==}
     engines: {node: '>=6.0.0'}
     hasBin: true
 
@@ -1622,8 +1622,8 @@ packages:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
 
-  caniuse-lite@1.0.30001780:
-    resolution: {integrity: sha512-llngX0E7nQci5BPJDqoZSbuZ5Bcs9F5db7EtgfwBerX9XGtkkiO4NwfDDIRzHTTwcYC8vC7bmeUEPGrKlR/TkQ==}
+  caniuse-lite@1.0.30001781:
+    resolution: {integrity: sha512-RdwNCyMsNBftLjW6w01z8bKEvT6e/5tpPVEgtn22TiLGlstHOVecsX2KHFkD5e/vRnIE4EGzpuIODb3mtswtkw==}
 
   chalk@4.1.2:
     resolution: {integrity: sha512-oKnbhFyRIXpUuez8iBMmyEa4nbj4IOQyuhc/wy9kY7/WVPcwIO9VA668Pu8RkO7+0G76SLROeyw9CpQ061i4mA==}
@@ -5533,7 +5533,7 @@ snapshots:
 
   base64-js@1.5.1: {}
 
-  baseline-browser-mapping@2.10.9: {}
+  baseline-browser-mapping@2.10.10: {}
 
   bl@4.1.0:
     dependencies:
@@ -5567,8 +5567,8 @@ snapshots:
 
   browserslist@4.28.1:
     dependencies:
-      baseline-browser-mapping: 2.10.9
-      caniuse-lite: 1.0.30001780
+      baseline-browser-mapping: 2.10.10
+      caniuse-lite: 1.0.30001781
       electron-to-chromium: 1.5.321
       node-releases: 2.0.36
       update-browserslist-db: 1.2.3(browserslist@4.28.1)
@@ -5641,7 +5641,7 @@ snapshots:
 
   callsites@3.1.0: {}
 
-  caniuse-lite@1.0.30001780: {}
+  caniuse-lite@1.0.30001781: {}
 
   chalk@4.1.2:
     dependencies:

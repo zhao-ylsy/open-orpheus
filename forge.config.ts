@@ -7,12 +7,25 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
-import { resolve, join, dirname } from "node:path";
-import { cp, mkdir } from "node:fs/promises";
+import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives"; // TODO: Remove in Electron Forge 8
 
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    derefSymlinks: true, // TODO: Remove in Electron Forge 8
+    // Override Vite Plugin's preferences, and with our preferences
+    ignore: (file: string) => {
+      if (!file) return;
+
+      return (
+        file.startsWith("/node_modules/.") ||
+        file.startsWith("/node_modules/electron/") ||
+        file.startsWith("/node_modules/electron-nightly/") ||
+        (!file.startsWith("/package.json") &&
+          !file.startsWith("/.vite") &&
+          !file.startsWith("/node_modules"))
+      );
+    },
   },
   rebuildConfig: {},
   makers: [
@@ -22,6 +35,7 @@ const config: ForgeConfig = {
     new MakerDeb({}),
   ],
   plugins: [
+    new AutoUnpackNativesPlugin({}),
     new VitePlugin({
       // `build` can specify multiple entry builds, which can be Main process, Preload scripts, Worker process, etc.
       // If you are familiar with Vite configuration, it will look really familiar.
@@ -62,35 +76,6 @@ const config: ForgeConfig = {
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
     }),
   ],
-  hooks: {
-    async packageAfterCopy(_forgeConfig, buildPath) {
-      const requiredNativePackages = (await import("./nativemodules.json"))
-        .default;
-
-      const sourceNodeModulesPath = resolve("node_modules");
-      const destNodeModulesPath = resolve(buildPath, "node_modules");
-
-      await Promise.all(
-        requiredNativePackages.map(async (packageName) => {
-          const sourcePath = join(sourceNodeModulesPath, packageName);
-          const destPath = join(destNodeModulesPath, packageName);
-
-          await mkdir(dirname(destPath), { recursive: true });
-          await cp(sourcePath, destPath, {
-            dereference: true,
-            recursive: true,
-            preserveTimestamps: true,
-            // Skip .bin directories inside node_modules — those hold dev-tool
-            // symlinks (e.g. .bin/tsc) pointing to hoisted packages that are
-            // not present locally, causing ENOENT when dereference follows them.
-            // TODO: filter out devDependencies
-            filter: (src) =>
-              !/\/node_modules\/\.bin(\/|$)/.test(src.slice(sourcePath.length)),
-          });
-        })
-      );
-    },
-  },
 };
 
 export default config;
