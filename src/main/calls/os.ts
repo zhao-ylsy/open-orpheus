@@ -83,6 +83,10 @@ registerCallHandler<[string], void>("os.navigateExternal", (event, url) => {
   shell.openExternal(url);
 });
 
+registerCallHandler<[string], void>("os.shellOpen", (event, path) => {
+  shell.openPath(path);
+});
+
 let preventSystemSleepBlocker: null | number = null,
   preventDisplaySleepBlocker: null | number = null;
 registerCallHandler<
