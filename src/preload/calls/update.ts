@@ -1,9 +1,4 @@
-import {
-  BUILD,
-  CORE_VERSION,
-  NATIVE_VERSION,
-  VERSION,
-} from "../../constants";
+import { BUILD, CORE_VERSION, NATIVE_VERSION, VERSION } from "../../constants";
 import { registerCallHandler } from "../calls";
 
 registerCallHandler<[string], [string, string]>(
