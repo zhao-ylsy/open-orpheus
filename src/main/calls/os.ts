@@ -8,6 +8,7 @@ import { getSystemFonts } from "@open-orpheus/ui";
 import { sanitizeRelativePath } from "../util";
 import { registerCallHandler } from "../calls";
 import { getADDeviceId, getDeviceId } from "../device";
+import { statfs } from "node:fs/promises";
 
 registerCallHandler<[string], [boolean]>("os.isFileExist", (event, path) => {
   const filePath = sanitizeRelativePath("data", path);
@@ -138,3 +139,8 @@ registerCallHandler<
     }
   }
 );
+
+registerCallHandler<[string], [string]>("os.getDiskSpace", async (event, path) => {
+  const statResult = await statfs(path);
+  return [JSON.stringify({ total: statResult.blocks * statResult.bsize, free: statResult.bfree * statResult.bsize })];
+});

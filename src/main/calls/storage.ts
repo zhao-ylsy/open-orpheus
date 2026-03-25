@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 
 import { data as dataDir, lyricCache } from "../folders";
@@ -101,12 +101,18 @@ registerCallHandler<[string, string], void>(
   }
 );
 
-registerCallHandler<[string, string, string, string, boolean, string], void>(
+registerCallHandler<[string, string, string, string, boolean, "abs" | "rel"], void>(
   "storage.savetofile",
-  async (event, taskId, content, mode, path) => {
-    const filePath = sanitizeRelativePath(dataDir, path);
-    if (filePath === false) {
-      throw new Error(`Forbidden file path access attempt: ${path}`);
+  async (event, taskId, content, mode, path, alone, type) => {
+    let filePath: string;
+    if (type === "rel") {
+      const p = sanitizeRelativePath(dataDir, path);
+      if (p === false) {
+        throw new Error(`Forbidden file path access attempt: ${path}`);
+      }
+      filePath = p;
+    } else {
+      filePath = path;
     }
 
     await mkdir(dirname(filePath), { recursive: true });
@@ -220,3 +226,39 @@ registerCallHandler<[string, string, string], void>(
     );
   }
 );
+
+registerCallHandler<[string], [boolean]>("storage.testwriteable", async (event, path) => {
+  const testFilePath = join(path, "open_orpheus_test_writable.tmp");
+  try {
+    await writeFile(testFilePath, "test", { flag: "w" });
+    await unlink(testFilePath);
+    return [true];
+  } catch {
+    return [false];
+  }
+});
+
+registerCallHandler<[string, "abs" | "rel", "", string], void>("storage.listFile", (event, taskId, type, emptyStr, path) => {
+  let filePath: string;
+  if (type === "rel") {
+    const p = sanitizeRelativePath(dataDir, path);
+    if (p === false) {
+      throw new Error(`Forbidden file path access attempt: ${path}`);
+    }
+    filePath = p;
+  } else {
+    filePath = path;
+  }
+  readdir(filePath, { withFileTypes: true }).then((dirents) => {
+    const files = dirents.map((dirent) => ({
+      name: dirent.name,
+      path: join(filePath, dirent.name),
+      type: dirent.isDirectory() ? "directory" : "file",
+    }));
+    event.sender.send("channel.call", "storage.onlistfile", taskId, 0, files);
+  }).catch((error) => {
+    console.error(`Error listing files in ${filePath}: ${error.message}`);
+    // TODO: Some error code?
+    event.sender.send("channel.call", "storage.onlistfile", taskId, 1, []);
+  });
+});

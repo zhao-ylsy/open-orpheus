@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  dialog,
   nativeImage,
   ThumbarButton,
   WebContents,
@@ -12,6 +13,7 @@ import { pngFromIco } from "../util";
 import os from "node:os";
 import { loadSkinPack } from "../pack";
 import { getApp } from "../ui";
+import { stat } from "node:fs/promises";
 
 registerCallHandler<string[], void>("app.log", (_ev, ...args) => {
   console.log(...args);
@@ -183,4 +185,43 @@ registerCallHandler<
   } else {
     // Logged out
   }
+});
+
+registerCallHandler<[string, string, "", string], void>("app.selectSystemFileAndDir", async (event, taskId, title, emptyStr, accept) => {
+  const wnd = BrowserWindow.fromWebContents(event.sender);
+  if (!wnd) return;
+  const filters = accept.split("\0\0").flatMap((item) => !item ? [] : [item.split("\0")]).map(([name, extensions]) => ({
+    name,
+    extensions: extensions.split(";").map(ext => ext === "*" ? ext : ext.replace(/^\*\./, "")),
+  }));
+  const result = await dialog.showOpenDialog(wnd, {
+    title,
+    properties: ["openFile", "openDirectory", "multiSelections", "dontAddToRecent"],
+    filters
+  });
+  if (result.canceled) {
+    event.sender.send("channel.call", "app.onSelectFileAndDir", false, taskId);
+    return;
+  }
+  const items: { isDir: boolean; path: string }[] = [];
+  await Promise.allSettled(result.filePaths.map(async (filePath) => {
+    const statResult = await stat(filePath);
+    items.push({ isDir: statResult.isDirectory(), path: filePath });
+  }));
+  event.sender.send("channel.call", "app.onSelectFileAndDir", true, taskId, items);
+});
+
+registerCallHandler<[string, string, "", string], void>("app.selectSystemDir", async (event, taskId, title, emptyStr, currentDir) => {
+  const wnd = BrowserWindow.fromWebContents(event.sender);
+  if (!wnd) return;
+  const result = await dialog.showOpenDialog(wnd, {
+    title,
+    defaultPath: currentDir,
+    properties: ["openDirectory", "dontAddToRecent", "createDirectory"],
+  });
+  if (result.canceled) {
+    event.sender.send("channel.call", "app.onSelectDir", false, taskId);
+    return;
+  }
+  event.sender.send("channel.call", "app.onselectsystemfile", true, taskId, result.filePaths[0]);
 });
