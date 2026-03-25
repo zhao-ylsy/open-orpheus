@@ -140,7 +140,15 @@ registerCallHandler<
   }
 );
 
-registerCallHandler<[string], [string]>("os.getDiskSpace", async (event, path) => {
-  const statResult = await statfs(path);
-  return [JSON.stringify({ total: statResult.blocks * statResult.bsize, free: statResult.bfree * statResult.bsize })];
-});
+registerCallHandler<[string], [string]>(
+  "os.getDiskSpace",
+  async (event, path) => {
+    const statResult = await statfs(path);
+    return [
+      JSON.stringify({
+        total: statResult.blocks * statResult.bsize,
+        free: statResult.bfree * statResult.bsize,
+      }),
+    ];
+  }
+);
