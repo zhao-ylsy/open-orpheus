@@ -25,6 +25,7 @@ import { initializeDatabases } from "./main/database";
 import { loadWebPack, webPack } from "./main/pack";
 import { createApp } from "./main/ui";
 import { openPackageDownloadWindow } from "./main/gui";
+import createDesktopLyricsWindow from "./main/desktopLyrics";
 
 // This is flags is required because package window is shown before main window, and we don't want to quit the app when package window is closed for any reason.
 let appStarted = false;
@@ -142,6 +143,7 @@ app.on("ready", async () => {
 
     await createApp(os.platform() === "linux" ? isWayland() : false);
 
+    createDesktopLyricsWindow();
     createWindow();
 
     appStarted = true;
