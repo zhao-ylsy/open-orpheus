@@ -175,7 +175,8 @@ fn parse_header(buf: &[u8]) -> Option<(u32, u16, usize)> {
     let word = u32::from_ne_bytes(buf[4..8].try_into().unwrap());
     let op = (word & 0xFFFF) as u16;
     let sz = (word >> 16) as usize;
-    if sz < 8 {
+    // Wayland wire sizes are always 4-byte aligned and at least 8 (header).
+    if sz < 8 || sz % 4 != 0 {
         return None;
     }
     Some((oid, op, sz))
@@ -273,11 +274,11 @@ fn feed(
     // Hold the buffer lock only long enough to append + extract complete
     // messages.  Releasing before dispatch avoids nested lock ordering issues
     // (the handlers acquire IFACES, POINTER_FOCUS, etc.).
-    let msgs: Vec<(u32, u16, Vec<u8>)> = {
+    let (msgs, sync_lost) = {
         let Ok(mut map) = storage.lock() else { return };
         let buf = map.entry(fd).or_default();
         buf.extend_from_slice(chunk);
-        let mut msgs = Vec::new();
+        let mut msgs: Vec<(u32, u16, Vec<u8>)> = Vec::new();
         let mut off = 0;
         loop {
             let Some((oid, op, sz)) = parse_header(&buf[off..]) else {
@@ -290,10 +291,11 @@ fn feed(
             off += sz;
         }
         buf.drain(..off);
-        if buf.len() > 4 << 20 {
+        let sync_lost = buf.len() > 4 << 20;
+        if sync_lost {
             buf.clear();
-        } // 4 MiB guard against sync loss
-        msgs
+        }
+        (msgs, sync_lost)
     };
 
     for (oid, op, msg) in msgs {
@@ -302,6 +304,14 @@ fn feed(
         } else {
             on_request(oid, op, &msg);
         }
+    }
+
+    // 4 MiB guard: if the reassembly buffer held more than 4 MiB of
+    // incomplete data, we have likely lost wire-format sync.  Reset all
+    // tracking state so stale object IDs cannot be reused.
+    if sync_lost {
+        eprintln!("[wayland] reassembly buffer exceeded 4 MiB — sync lost, resetting state");
+        reset_tracking_state();
     }
 }
 
@@ -588,16 +598,22 @@ fn is_wayland_socket(addr: *const c_void, addrlen: u32) -> bool {
         return false;
     }
 
-    // Fast path: path contains the literal string "wayland".
-    if candidate.windows(7).any(|w| w == b"wayland") {
-        return true;
-    }
-
-    // Slower path: compare the filename component against $WAYLAND_DISPLAY.
+    // Primary: match against $WAYLAND_DISPLAY (canonical method).
     if let Ok(disp) = std::env::var("WAYLAND_DISPLAY") {
         return candidate.ends_with(disp.as_bytes());
     }
-    false
+
+    // Fallback when $WAYLAND_DISPLAY is unset: match the default socket name
+    // pattern "wayland-<digits>" (e.g. wayland-0) to avoid false positives
+    // from unrelated sockets whose path merely contains "wayland".
+    let filename = candidate
+        .iter()
+        .rposition(|&b| b == b'/')
+        .map(|p| &candidate[p + 1..])
+        .unwrap_or(candidate);
+    filename.starts_with(b"wayland-")
+        && filename.len() > 8
+        && filename[8..].iter().all(|b| b.is_ascii_digit())
 }
 
 // ── Connection reset ──────────────────────────────────────────────────────
@@ -608,14 +624,14 @@ fn is_wayland_socket(addr: *const c_void, addrlen: u32) -> bool {
 //
 // IS_WAYLAND is intentionally left true — we know this process uses Wayland.
 
-fn reset_connection_state(old_fd: RawFd) {
-    if let Some(m) = WAYLAND_FD.get() {
-        let _ = m.lock().map(|mut g| *g = None);
-    }
+/// Resets object-tracking state (IFACES, pointer/surface maps, LAST_BUTTON)
+/// without touching WAYLAND_FD or reassembly buffers.  Used after sync loss
+/// and when replacing the tracked connection.
+fn reset_tracking_state() {
     if let Some(m) = IFACES.get() {
         let _ = m.lock().map(|mut g| {
             g.clear();
-            g.insert(1, Iface::WlDisplay); // wl_display is always object ID 1
+            g.insert(1, Iface::WlDisplay);
         });
     }
     if let Some(m) = POINTER_FOCUS.get() {
@@ -633,11 +649,16 @@ fn reset_connection_state(old_fd: RawFd) {
     if let Some(m) = TOP_TO_XDG.get() {
         let _ = m.lock().map(|mut g| g.clear());
     }
-    // Clear LAST_BUTTON: the snapshotted wl_surface_id is invalid after
-    // reconnection (new connection uses different object IDs).
     if let Some(m) = LAST_BUTTON.get() {
         let _ = m.lock().map(|mut g| *g = None);
     }
+}
+
+fn reset_connection_state(old_fd: RawFd) {
+    if let Some(m) = WAYLAND_FD.get() {
+        let _ = m.lock().map(|mut g| *g = None);
+    }
+    reset_tracking_state();
     if let Some(m) = RX_BUFS.get() {
         let _ = m.lock().map(|mut g| g.remove(&old_fd));
     }
@@ -662,9 +683,22 @@ extern "C" fn hook_connect(fd: c_int, addr: *const c_void, addrlen: u32) -> c_in
         IS_WAYLAND.set(true).ok();
         if let Some(guard) = WAYLAND_FD.get()
             && let Ok(mut opt) = guard.lock()
-            && opt.is_none()
         {
+            let old_fd = *opt;
             *opt = Some(fd);
+            // If replacing a previous connection, reset tracking state and
+            // clean up the old fd's reassembly buffers.
+            if let Some(old) = old_fd
+                && old != fd {
+                    drop(opt);
+                    reset_tracking_state();
+                    if let Some(m) = RX_BUFS.get() {
+                        let _ = m.lock().map(|mut g| g.remove(&old));
+                    }
+                    if let Some(m) = TX_BUFS.get() {
+                        let _ = m.lock().map(|mut g| g.remove(&old));
+                    }
+                }
         }
     }
     ret
@@ -707,28 +741,36 @@ extern "C" fn hook_recvmsg(fd: c_int, hdr: *mut msghdr, flags: c_int) -> ssize_t
 }
 
 /// sendmsg(2) — intercept client→server Wayland requests.
-/// We parse BEFORE the actual send so object state is current the instant
-/// the call returns.
+/// We parse AFTER the actual send so that failed sends do not leave
+/// phantom state, and only the bytes actually accepted by the kernel
+/// are fed to the outbound parser.
 extern "C" fn hook_sendmsg(fd: c_int, hdr: *const msghdr, flags: c_int) -> ssize_t {
-    if is_wayland_fd(fd) && !hdr.is_null() {
+    let ret = HOOK_SENDMSG.get().map_or(-1, |h| h.call(fd, hdr, flags));
+    if ret > 0 && is_wayland_fd(fd) && !hdr.is_null() {
         let h = unsafe { &*hdr };
         if !h.msg_iov.is_null() {
-            let mut packet = Vec::new();
+            let mut remaining = ret as usize;
+            let mut packet = Vec::with_capacity(remaining);
             for i in 0..h.msg_iovlen {
+                if remaining == 0 {
+                    break;
+                }
                 let iov = unsafe { &*h.msg_iov.add(i) };
                 if iov.iov_base.is_null() || iov.iov_len == 0 {
                     continue;
                 }
+                let take = iov.iov_len.min(remaining);
                 packet.extend_from_slice(unsafe {
-                    std::slice::from_raw_parts(iov.iov_base as *const u8, iov.iov_len)
+                    std::slice::from_raw_parts(iov.iov_base as *const u8, take)
                 });
+                remaining -= take;
             }
             if !packet.is_empty() {
                 feed_outbound(fd, &packet);
             }
         }
     }
-    HOOK_SENDMSG.get().map_or(-1, |h| h.call(fd, hdr, flags))
+    ret
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────
@@ -802,13 +844,34 @@ pub(super) fn send_xdg_toplevel_move() -> bool {
     buf[8..12].copy_from_slice(&seat_id.to_ne_bytes());
     buf[12..16].copy_from_slice(&serial.to_ne_bytes());
 
-    // Use write(2) directly rather than going through sendmsg to avoid
-    // re-entering our own hook.  xdg_toplevel::move carries no file descriptors
-    // so plain write(2) on the Unix socket is sufficient and atomic (< PIPE_BUF).
-    let ret = unsafe { libc::write(fd, buf.as_ptr() as *const c_void, 16) };
+    // Send via the original sendmsg trampoline (bypasses our hook_sendmsg,
+    // avoiding re-entrant parsing).  xdg_toplevel::move carries no file
+    // descriptors so an iov-only msghdr is sufficient.
+    //
+    // NOTE: a residual interleaving risk exists if libwayland has partially
+    // flushed its internal buffer (sendmsg returned a short write / EAGAIN).
+    // This is extremely unlikely in practice: both this call and libwayland's
+    // flush run on the main thread, the Wayland socket buffer is rarely full,
+    // and the 16-byte message is well below PIPE_BUF (atomic kernel write).
+    let mut iov = libc::iovec {
+        iov_base: buf.as_mut_ptr() as *mut c_void,
+        iov_len: 16,
+    };
+    let msg = libc::msghdr {
+        msg_name: std::ptr::null_mut(),
+        msg_namelen: 0,
+        msg_iov: &mut iov as *mut libc::iovec,
+        msg_iovlen: 1,
+        msg_control: std::ptr::null_mut(),
+        msg_controllen: 0,
+        msg_flags: 0,
+    };
+    let ret = HOOK_SENDMSG
+        .get()
+        .map_or(-1, |h| h.call(fd, &msg as *const msghdr, 0));
     if ret != 16 {
         eprintln!(
-            "[wayland] send_xdg_toplevel_move: write returned {} (errno {})",
+            "[wayland] send_xdg_toplevel_move: sendmsg returned {} (errno {})",
             ret,
             unsafe { *libc::__errno_location() }
         );
