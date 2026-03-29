@@ -3,8 +3,10 @@ import { join } from "node:path";
 import { BrowserWindow } from "electron";
 import { setWindowId } from "./window";
 
+let desktopLyricsWindow: BrowserWindow | null = null;
+
 export default function createDesktopLyricsWindow() {
-  const wnd = new BrowserWindow({
+  desktopLyricsWindow = new BrowserWindow({
     width: 1000,
     height: 300,
     skipTaskbar: true,
@@ -18,9 +20,13 @@ export default function createDesktopLyricsWindow() {
     },
   });
   if (GUI_VITE_DEV_SERVER_URL) {
-    wnd.loadURL(`${GUI_VITE_DEV_SERVER_URL}/desktop-lyrics`);
+    desktopLyricsWindow.loadURL(`${GUI_VITE_DEV_SERVER_URL}/desktop-lyrics`);
   } else {
-    wnd.loadFile(join(__dirname, "gui/desktop-lyrics.html"));
+    desktopLyricsWindow.loadFile(join(__dirname, "gui/desktop-lyrics.html"));
   }
-  setWindowId(wnd, "desktop_lyrics");
+  setWindowId(desktopLyricsWindow, "desktop_lyrics");
+}
+
+export function getDesktopLyricsWindow() {
+  return desktopLyricsWindow;
 }
