@@ -8,7 +8,7 @@ import { Menu } from "@open-orpheus/ui";
 import { registerCallHandler } from "../calls";
 import { loadFromOrpheusUrl } from "../orpheus";
 import { getWindowScaleFactor, pngFromIco } from "../util";
-import { getMenus, setMaximumSize } from "../window";
+import { getMenus, setMaximumSize, setMinimumSize } from "../window";
 import { AppMenuItem } from "../menu";
 import { getApp } from "../ui";
 
@@ -134,11 +134,11 @@ registerCallHandler<[{ x: number; y: number }, { x: number; y: number }], void>(
   (event, min, max) => {
     const wnd = BrowserWindow.fromWebContents(event.sender);
     if (!wnd) return;
-    wnd.setMinimumSize(min.x, min.y);
     const scaleFactor = shouldApplyScaleFactor()
       ? getWindowScaleFactor(wnd)
       : 1;
-    // Use window module to set maximum size to avoid issues with maximized windows
+    // Use window module to set maximum size to avoid issues with maximized/fullscreen windows
+    setMinimumSize(wnd, min.x, min.y);
     setMaximumSize(wnd, max.x * scaleFactor, max.y * scaleFactor);
   }
 );

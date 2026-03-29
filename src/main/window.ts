@@ -3,6 +3,7 @@ import { Menu } from "@open-orpheus/ui";
 
 type WindowProperties = {
   maximumSize?: { x: number; y: number };
+  minimumSize?: { x: number; y: number };
   menus: Map<number, Menu>;
   customProps: Record<string, unknown>;
 };
@@ -23,13 +24,36 @@ app.on("browser-window-created", (event, wnd) => {
   });
 
   wnd.on("maximize", () => {
-    wnd.setMaximumSize(0, 0);
+    const props = windowProperties.get(wnd.id);
+    if (props?.maximumSize) {
+      wnd.setMaximumSize(0, 0);
+    }
   });
 
   wnd.on("unmaximize", () => {
     const props = windowProperties.get(wnd.id);
     if (props?.maximumSize) {
       wnd.setMaximumSize(props.maximumSize.x, props.maximumSize.y);
+    }
+  });
+
+  wnd.on("enter-full-screen", () => {
+    const props = windowProperties.get(wnd.id);
+    if (props?.maximumSize) {
+      wnd.setMaximumSize(0, 0);
+    }
+    if (props?.minimumSize) {
+      wnd.setMinimumSize(0, 0);
+    }
+  });
+
+  wnd.on("leave-full-screen", () => {
+    const props = windowProperties.get(wnd.id);
+    if (props?.maximumSize) {
+      wnd.setMaximumSize(props.maximumSize.x, props.maximumSize.y);
+    }
+    if (props?.minimumSize) {
+      wnd.setMinimumSize(props.minimumSize.x, props.minimumSize.y);
     }
   });
 
@@ -42,12 +66,22 @@ app.on("browser-window-created", (event, wnd) => {
 });
 
 export function setMaximumSize(wnd: BrowserWindow, x: number, y: number) {
-  if (wnd.isMaximized()) {
+  if (!wnd.isMaximized()) {
     wnd.setMaximumSize(x, y);
   }
   const props = windowProperties.get(wnd.id);
   if (props) {
     props.maximumSize = { x, y };
+  }
+}
+
+export function setMinimumSize(wnd: BrowserWindow, x: number, y: number) {
+  if (!wnd.isFullScreen()) {
+    wnd.setMinimumSize(x, y);
+  }
+  const props = windowProperties.get(wnd.id);
+  if (props) {
+    props.minimumSize = { x, y };
   }
 }
 
