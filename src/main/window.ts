@@ -10,6 +10,30 @@ type WindowProperties = {
 
 const windowProperties = new Map<number, WindowProperties>();
 
+function shouldRespectSizeConstraints(wnd: BrowserWindow) {
+  return !wnd.isMaximized() && !wnd.isFullScreen();
+}
+
+function enableSizeConstraints(wnd: BrowserWindow) {
+  const props = windowProperties.get(wnd.id);
+  if (props?.maximumSize) {
+    wnd.setMaximumSize(props.maximumSize.x, props.maximumSize.y);
+  }
+  if (props?.minimumSize) {
+    wnd.setMinimumSize(props.minimumSize.x, props.minimumSize.y);
+  }
+}
+
+function disableSizeConstraints(wnd: BrowserWindow) {
+  const props = windowProperties.get(wnd.id);
+  if (props?.maximumSize) {
+    wnd.setMaximumSize(0, 0);
+  }
+  if (props?.minimumSize) {
+    wnd.setMinimumSize(0, 0);
+  }
+}
+
 app.on("browser-window-created", (event, wnd) => {
   if (wnd.webContents.session == session.fromPartition("open-orpheus")) {
     return; // Manage internal windows separately.
@@ -24,37 +48,19 @@ app.on("browser-window-created", (event, wnd) => {
   });
 
   wnd.on("maximize", () => {
-    const props = windowProperties.get(wnd.id);
-    if (props?.maximumSize) {
-      wnd.setMaximumSize(0, 0);
-    }
+    disableSizeConstraints(wnd);
   });
 
   wnd.on("unmaximize", () => {
-    const props = windowProperties.get(wnd.id);
-    if (props?.maximumSize) {
-      wnd.setMaximumSize(props.maximumSize.x, props.maximumSize.y);
-    }
+    enableSizeConstraints(wnd);
   });
 
   wnd.on("enter-full-screen", () => {
-    const props = windowProperties.get(wnd.id);
-    if (props?.maximumSize) {
-      wnd.setMaximumSize(0, 0);
-    }
-    if (props?.minimumSize) {
-      wnd.setMinimumSize(0, 0);
-    }
+    disableSizeConstraints(wnd);
   });
 
   wnd.on("leave-full-screen", () => {
-    const props = windowProperties.get(wnd.id);
-    if (props?.maximumSize) {
-      wnd.setMaximumSize(props.maximumSize.x, props.maximumSize.y);
-    }
-    if (props?.minimumSize) {
-      wnd.setMinimumSize(props.minimumSize.x, props.minimumSize.y);
-    }
+    enableSizeConstraints(wnd);
   });
 
   wnd.webContents.setWindowOpenHandler(({ url }) => {
@@ -66,7 +72,7 @@ app.on("browser-window-created", (event, wnd) => {
 });
 
 export function setMaximumSize(wnd: BrowserWindow, x: number, y: number) {
-  if (!wnd.isMaximized()) {
+  if (shouldRespectSizeConstraints(wnd)) {
     wnd.setMaximumSize(x, y);
   }
   const props = windowProperties.get(wnd.id);
@@ -76,7 +82,7 @@ export function setMaximumSize(wnd: BrowserWindow, x: number, y: number) {
 }
 
 export function setMinimumSize(wnd: BrowserWindow, x: number, y: number) {
-  if (!wnd.isFullScreen()) {
+  if (shouldRespectSizeConstraints(wnd)) {
     wnd.setMinimumSize(x, y);
   }
   const props = windowProperties.get(wnd.id);
