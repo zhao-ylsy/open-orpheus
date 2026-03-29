@@ -1,5 +1,8 @@
 import { IpcMainInvokeEvent } from "electron";
-import CallDispatcher, { HandlerFunction } from "../CallDispatcher";
+import CallDispatcher, {
+  CallbackHandlerFunction,
+  HandlerFunction,
+} from "../CallDispatcher";
 
 export const dispatcher = new CallDispatcher();
 
@@ -11,4 +14,11 @@ export function registerCallHandler<
   handler: HandlerFunction<[IpcMainInvokeEvent, ...Args], Return>
 ) {
   dispatcher.registerHandler(cmd, handler);
+}
+
+export function registerCallbackHandler<Args extends unknown[]>(
+  cmd: string,
+  handler: CallbackHandlerFunction<[IpcMainInvokeEvent, ...Args]>
+) {
+  dispatcher.registerCallbackHandler(cmd, handler);
 }
