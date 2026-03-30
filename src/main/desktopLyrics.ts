@@ -19,8 +19,8 @@ function sendToLyricsWindow(channel: string, data: unknown) {
 
 export default function createDesktopLyricsWindow() {
   desktopLyricsWindow = new BrowserWindow({
-    width: 1000,
-    height: 300,
+    width: 800, // TODO: Proper sizes
+    height: 250,
     skipTaskbar: true,
     transparent: true,
     hasShadow: false,
@@ -66,8 +66,8 @@ export default function createDesktopLyricsWindow() {
 
 ipcMain.handle(
   "desktopLyrics.updateLyrics",
-  (_event, lrc: string, tlrc: string) => {
-    const parsed = parseLrc(lrc, tlrc || undefined);
+  (_event, lrc: string | null, tlrc: string | null) => {
+    const parsed = lrc ? parseLrc(lrc, tlrc || undefined) : null;
     sendToLyricsWindow("desktopLyrics.lyricsUpdate", parsed);
   }
 );

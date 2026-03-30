@@ -116,8 +116,18 @@
   });
 
   // Lines to display
+  let sloganLine: LyricLine | null = $derived(
+    !lyricsData && style.slogan
+      ? {
+          start_time: 0,
+          end_time: Infinity,
+          words: [{ text: style.slogan, start_time: 0, duration: 0 }],
+        }
+      : null
+  );
+
   let primaryLine = $derived(
-    lyricsData && upperIdx >= 0 ? lyricsData.lines[upperIdx] : null
+    lyricsData && upperIdx >= 0 ? lyricsData.lines[upperIdx] : sloganLine
   );
 
   let secondaryLine = $derived.by(() => {
@@ -263,7 +273,7 @@
   );
 </script>
 
-{#if lyricsData && (primaryLine || secondaryLine || style.slogan)}
+{#if lyricsData || style.slogan}
   <div
     class="flex justify-center gap-1 overflow-hidden p-2 {style.vertical
       ? 'flex-row-reverse'
@@ -293,9 +303,9 @@
             <span
               class="absolute top-0 left-0 inline text-transparent select-none"
               style="
-                {unplayedOutline ? `text-shadow: ${unplayedOutline};` : ''}
-                {shadowStyle}
-              "
+                  {unplayedOutline ? `text-shadow: ${unplayedOutline};` : ''}
+                  {shadowStyle}
+                "
             >
               {primaryLine.words.map((w) => w.text).join("")}
             </span>
@@ -303,13 +313,13 @@
               <span
                 class="absolute top-0 left-0 inline text-transparent will-change-[clip-path] select-none"
                 style="
-                  {playedOutline ? `text-shadow: ${playedOutline};` : ''}
-                  clip-path: inset(0 {style.vertical
+                    {playedOutline ? `text-shadow: ${playedOutline};` : ''}
+                    clip-path: inset(0 {style.vertical
                   ? '0'
                   : `${(1 - primaryProgress) * 100}%`} {style.vertical
                   ? `${(1 - primaryProgress) * 100}%`
                   : '0'} 0);
-                "
+                  "
               >
                 {primaryLine.words.map((w) => w.text).join("")}
               </span>
@@ -319,11 +329,11 @@
           <span
             class="inline text-transparent select-none"
             style="
-              background: {unplayedGradient};
-              -webkit-background-clip: text;
-              background-clip: text;
-              {shadowStyle}
-            "
+                background: {unplayedGradient};
+                -webkit-background-clip: text;
+                background-clip: text;
+                {shadowStyle}
+              "
           >
             {primaryLine.words.map((w) => w.text).join("")}
           </span>
@@ -332,22 +342,22 @@
             <span
               class="absolute top-0 left-0 inline text-transparent will-change-[clip-path] select-none"
               style="
-                background: {playedGradient};
-                -webkit-background-clip: text;
-                background-clip: text;
-                clip-path: inset(0 {style.vertical
+                  background: {playedGradient};
+                  -webkit-background-clip: text;
+                  background-clip: text;
+                  clip-path: inset(0 {style.vertical
                 ? '0'
                 : `${(1 - primaryProgress) * 100}%`} {style.vertical
                 ? `${(1 - primaryProgress) * 100}%`
                 : '0'} 0);
-              "
+                "
             >
               {primaryLine.words.map((w) => w.text).join("")}
             </span>
           {/if}
         </div>
       </div>
-    {:else if !style.lineMode && !hasSecondary}
+    {:else if !style.lineMode}
       <div
         class="invisible leading-[1.3] {style.vertical
           ? '[writing-mode:vertical-rl]'
@@ -355,36 +365,6 @@
         style={fontStyle}
       >
         &nbsp;
-      </div>
-    {:else if style.slogan}
-      <div
-        class="relative overflow-hidden leading-[1.3] whitespace-nowrap {style.vertical
-          ? '[text-orientation:mixed] [writing-mode:vertical-rl]'
-          : ''}"
-        style="text-align: {style.textAlign[0]}; {fontStyle}"
-      >
-        {#if unplayedOutline}
-          <span
-            class="absolute top-0 left-0 inline text-transparent select-none"
-            style="
-              {`text-shadow: ${unplayedOutline};`}
-              {shadowStyle}
-            "
-          >
-            {style.slogan}
-          </span>
-        {/if}
-        <span
-          class="inline text-transparent select-none"
-          style="
-            background: {unplayedGradient};
-            -webkit-background-clip: text;
-            background-clip: text;
-            {shadowStyle}
-          "
-        >
-          {style.slogan}
-        </span>
       </div>
     {/if}
 
@@ -410,9 +390,9 @@
             <span
               class="absolute top-0 left-0 inline text-transparent select-none"
               style="
-                {unplayedOutline ? `text-shadow: ${unplayedOutline};` : ''}
-                {shadowStyle}
-              "
+                  {unplayedOutline ? `text-shadow: ${unplayedOutline};` : ''}
+                  {shadowStyle}
+                "
             >
               {secondaryLine.words.map((w) => w.text).join("")}
             </span>
@@ -420,13 +400,13 @@
               <span
                 class="absolute top-0 left-0 inline text-transparent will-change-[clip-path] select-none"
                 style="
-                  {playedOutline ? `text-shadow: ${playedOutline};` : ''}
-                  clip-path: inset(0 {style.vertical
+                    {playedOutline ? `text-shadow: ${playedOutline};` : ''}
+                    clip-path: inset(0 {style.vertical
                   ? '0'
                   : `${(1 - secondaryProgress) * 100}%`} {style.vertical
                   ? `${(1 - secondaryProgress) * 100}%`
                   : '0'} 0);
-                "
+                  "
               >
                 {secondaryLine.words.map((w) => w.text).join("")}
               </span>
@@ -436,11 +416,11 @@
           <span
             class="inline text-transparent select-none"
             style="
-              background: {unplayedGradient};
-              -webkit-background-clip: text;
-              background-clip: text;
-              {shadowStyle}
-            "
+                background: {unplayedGradient};
+                -webkit-background-clip: text;
+                background-clip: text;
+                {shadowStyle}
+              "
           >
             {secondaryLine.words.map((w) => w.text).join("")}
           </span>
@@ -448,22 +428,22 @@
             <span
               class="absolute top-0 left-0 inline text-transparent will-change-[clip-path] select-none"
               style="
-                background: {playedGradient};
-                -webkit-background-clip: text;
-                background-clip: text;
-                clip-path: inset(0 {style.vertical
+                  background: {playedGradient};
+                  -webkit-background-clip: text;
+                  background-clip: text;
+                  clip-path: inset(0 {style.vertical
                 ? '0'
                 : `${(1 - secondaryProgress) * 100}%`} {style.vertical
                 ? `${(1 - secondaryProgress) * 100}%`
                 : '0'} 0);
-              "
+                "
             >
               {secondaryLine.words.map((w) => w.text).join("")}
             </span>
           {/if}
         </div>
       </div>
-    {:else if !style.lineMode && !hasSecondary}
+    {:else if !style.lineMode}
       <div
         class="invisible leading-[1.3] {style.vertical
           ? '[writing-mode:vertical-rl]'

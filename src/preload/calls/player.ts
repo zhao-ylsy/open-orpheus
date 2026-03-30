@@ -161,6 +161,7 @@ registerCallHandler<[boolean], [boolean]>("player.setLock", (locked) => {
 
 registerCallHandler<[string], [boolean]>("player.setLRCSlogan", (slogan) => {
   player.lyricStyle.slogan = slogan;
+  if (slogan) player.lyricContent = null;
   return [true];
 });
 
@@ -178,6 +179,7 @@ registerCallHandler<
   [boolean]
 >("player.setLyrics", (lyricContent) => {
   player.lyricContent = lyricContent;
+  if (lyricContent.lrc) player.lyricStyle.slogan = "";
   return [true];
 });
 

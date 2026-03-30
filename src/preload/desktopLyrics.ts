@@ -7,6 +7,8 @@ player.addEventListener("lyriccontentupdate", (e) => {
   const content = (e as CustomEvent).detail;
   if (content) {
     ipcRenderer.invoke("desktopLyrics.updateLyrics", content.lrc, content.tlrc);
+  } else {
+    ipcRenderer.invoke("desktopLyrics.updateLyrics", null, null);
   }
 });
 
@@ -97,13 +99,15 @@ player.audio.addEventListener("seeked", () => {
 
 // Handle full state request from desktop lyrics window
 ipcRenderer.on("desktopLyrics.sendFullState", () => {
-  // Re-send lyrics content
+  // Re-send lyrics content (send null to clear if no content)
   if (player.lyricContent) {
     ipcRenderer.invoke(
       "desktopLyrics.updateLyrics",
       player.lyricContent.lrc,
       player.lyricContent.tlrc
     );
+  } else {
+    ipcRenderer.invoke("desktopLyrics.updateLyrics", null, null);
   }
 
   // Re-send current time and play state
