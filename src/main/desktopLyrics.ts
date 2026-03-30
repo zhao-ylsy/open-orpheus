@@ -60,6 +60,14 @@ export default function createDesktopLyricsWindow() {
       }
     }
   );
+
+  desktopLyricsWindow.webContents.ipc.handle(
+    "desktopLyrics.changeOrientation",
+    () => {
+      const sz = desktopLyricsWindow.getSize();
+      desktopLyricsWindow.setSize(sz[1], sz[0]);
+    }
+  );
 }
 
 // --- IPC handlers ---
@@ -105,11 +113,5 @@ ipcMain.handle("desktopLyrics.hide", () => {
 ipcMain.handle("desktopLyrics.setTopMost", (_event, topMost: boolean) => {
   if (desktopLyricsWindow && !desktopLyricsWindow.isDestroyed()) {
     desktopLyricsWindow.setAlwaysOnTop(topMost);
-  }
-});
-
-ipcMain.handle("desktopLyrics.setLocked", (_event, locked: boolean) => {
-  if (desktopLyricsWindow && !desktopLyricsWindow.isDestroyed()) {
-    desktopLyricsWindow.setIgnoreMouseEvents(locked, { forward: true });
   }
 });
