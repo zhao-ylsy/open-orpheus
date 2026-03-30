@@ -162,12 +162,11 @@ registerCallHandler<
     },
   ],
   void
->("winhelper.setNativeWindowShow", (event, id, show, rect) => {
+>("winhelper.setNativeWindowShow", (event, id, show /*, workArea*/) => {
   if (!id) return;
   const wnd = getWindowById(id);
   if (!wnd) return;
   if (show) {
-    wnd.setBounds(rect);
     wnd.show();
     wnd.focus();
   } else {
