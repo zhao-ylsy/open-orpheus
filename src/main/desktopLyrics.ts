@@ -20,7 +20,7 @@ function sendToLyricsWindow(channel: string, data: unknown) {
 export default function createDesktopLyricsWindow() {
   desktopLyricsWindow = new BrowserWindow({
     width: 800, // TODO: Proper sizes
-    height: 250,
+    height: 225,
     skipTaskbar: true,
     transparent: true,
     hasShadow: false,
