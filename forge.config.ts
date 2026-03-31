@@ -12,7 +12,7 @@ import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-nati
 const config: ForgeConfig = {
   packagerConfig: {
     asar: {
-      unpack: "**/*.so*",
+      unpack: "**/*.{so*,dylib,dll}",
     },
     derefSymlinks: true, // TODO: Remove in Electron Forge 8
     // Override Vite Plugin's preferences, and with our preferences
