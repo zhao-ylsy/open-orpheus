@@ -88,17 +88,11 @@
 </script>
 
 <div
-  class="fixed inset-0 flex h-screen w-screen {lyricStyle.vertical &&
-  !calculatingScale
-    ? 'items-start'
-    : 'items-center'} justify-center overflow-hidden"
+  class="fixed inset-0 flex h-screen w-screen items-center justify-center overflow-hidden"
 >
   <div
     bind:this={lyricsEl}
-    style="transform: scale({scale}); transform-origin: {lyricStyle.vertical &&
-    !calculatingScale
-      ? 'top'
-      : 'center center'};"
+    style="transform: scale({scale}); transform-origin: center center;"
   >
     <Lyrics {lyricsData} {currentTime} {lyricStyle} />
   </div>

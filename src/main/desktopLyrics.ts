@@ -1,11 +1,13 @@
 import { dirname, join } from "node:path";
+import { mkdir, writeFile } from "node:fs/promises";
 
 import { BrowserWindow, ipcMain } from "electron";
+import sharp from "sharp";
+
 import { setWindowId } from "./window";
 import { parseLrc } from "./lyrics";
 import { sanitizeRelativePath } from "./util";
 import { storage } from "./folders";
-import { mkdir, writeFile } from "node:fs/promises";
 
 let desktopLyricsWindow: BrowserWindow | null = null;
 let mainWnd: BrowserWindow | null = null;
@@ -159,6 +161,7 @@ export async function createDesktopLyricsPreview(
     hasShadow: false,
     frame: false,
     resizable: false,
+    useContentSize: true,
     webPreferences: {
       offscreen: true,
       partition: "open-orpheus",
@@ -189,7 +192,9 @@ export async function createDesktopLyricsPreview(
         clearTimeout(timeout);
         try {
           const image = await previewWindow.webContents.capturePage();
-          resolve([image.toPNG(), [width, height]]);
+          resolve([Buffer.from(await sharp(image.toPNG())
+            .resize(width, height)
+            .toBuffer()), [width, height]]);
         } catch (err) {
           reject(err);
         } finally {
