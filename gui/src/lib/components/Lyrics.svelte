@@ -327,7 +327,7 @@
           {/if}
           <!-- Unplayed fill layer -->
           <span
-            class="inline text-transparent select-none"
+            class="relative inline text-transparent select-none"
             style="
                 background: {unplayedGradient};
                 -webkit-background-clip: text;
@@ -414,7 +414,7 @@
           {/if}
           <!-- Unplayed fill layer -->
           <span
-            class="inline text-transparent select-none"
+            class="relative inline text-transparent select-none"
             style="
                 background: {unplayedGradient};
                 -webkit-background-clip: text;

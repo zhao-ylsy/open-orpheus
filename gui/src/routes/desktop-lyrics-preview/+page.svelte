@@ -48,20 +48,16 @@
   let currentTime = $derived(lyricStyle.lineMode ? 5000 : 10000);
 
   let lyricsEl: HTMLDivElement | undefined = $state();
-  let calculatingScale = $state(false);
   let scale = $state(1);
 
   function fitScale() {
     if (!lyricsEl) return;
     // Reset scale to measure natural size
-    // TODO: Better scaling strategy
-    calculatingScale = true;
     scale = 1;
     requestAnimationFrame(() => {
       if (!lyricsEl) return;
       const sw = window.innerWidth / lyricsEl.scrollWidth;
       const sh = window.innerHeight / lyricsEl.scrollHeight;
-      calculatingScale = false;
       scale = Math.min(sw, sh);
     });
   }
@@ -83,7 +79,7 @@
     fitScale();
     // Wait for scale to apply + repaint before signaling ready
     await tick();
-    setTimeout(() => api.ready(), 50);
+    setTimeout(api.ready, 10);
   });
 </script>
 
