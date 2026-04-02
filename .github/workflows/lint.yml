@@ -27,15 +27,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build native modules
-        shell: bash
-        run: |
-          set -euo pipefail
-          for module in modules/database modules/ui modules/window; do
-            echo "Building ${module}"
-            pushd "${module}" > /dev/null
-            pnpm prepack
-            popd > /dev/null
-          done
+        run: pnpm build:modules
 
       - name: Run ESLint
         run: pnpm lint

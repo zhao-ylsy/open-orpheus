@@ -30,15 +30,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build native modules
-        shell: bash
-        run: |
-          set -euo pipefail
-          for module in modules/lifecycle modules/database modules/ui modules/window; do
-            echo "Building ${module}"
-            pushd "${module}" > /dev/null
-            pnpm build
-            popd > /dev/null
-          done
+        run: pnpm build:modules
 
       - name: Build application bundles
         run: pnpm make
