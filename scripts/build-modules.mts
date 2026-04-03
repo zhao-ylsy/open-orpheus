@@ -54,31 +54,39 @@ async function readModuleInfos(
   );
 }
 
-function topoSort(modules: ModuleInfo[]): ModuleInfo[] {
+function computeLayers(modules: ModuleInfo[]): ModuleInfo[][] {
   const nameToModule = new Map(modules.map((m) => [m.packageName, m]));
-  const sorted: ModuleInfo[] = [];
-  const visited = new Set<string>();
+  const layerCache = new Map<string, number>();
   const visiting = new Set<string>();
 
-  function visit(mod: ModuleInfo) {
-    if (visited.has(mod.packageName)) return;
+  function getLayer(mod: ModuleInfo): number {
+    if (layerCache.has(mod.packageName)) return layerCache.get(mod.packageName)!;
     if (visiting.has(mod.packageName)) {
       throw new Error(
         `Circular dependency detected involving ${mod.packageName}`
       );
     }
     visiting.add(mod.packageName);
+    let maxDepLayer = -1;
     for (const dep of mod.workspaceDeps) {
       const depMod = nameToModule.get(dep);
-      if (depMod) visit(depMod);
+      if (depMod) maxDepLayer = Math.max(maxDepLayer, getLayer(depMod));
     }
     visiting.delete(mod.packageName);
-    visited.add(mod.packageName);
-    sorted.push(mod);
+    const layer = maxDepLayer + 1;
+    layerCache.set(mod.packageName, layer);
+    return layer;
   }
 
-  for (const mod of modules) visit(mod);
-  return sorted;
+  for (const mod of modules) getLayer(mod);
+
+  const layers: ModuleInfo[][] = [];
+  for (const mod of modules) {
+    const l = layerCache.get(mod.packageName)!;
+    while (layers.length <= l) layers.push([]);
+    layers[l].push(mod);
+  }
+  return layers;
 }
 
 async function buildModules() {
@@ -88,20 +96,24 @@ async function buildModules() {
   );
   const moduleNames = await readdir(modulesDir);
   const modules = await readModuleInfos(modulesDir, moduleNames);
-  const sorted = topoSort(modules);
+  const layers = computeLayers(modules);
   const preferScript = process.env.PREFER_SCRIPT;
 
-  for (const mod of sorted) {
-    const script =
-      preferScript && mod.scripts[preferScript] ? preferScript : "build";
-    console.log(
-      `Building module: ${mod.dirName} (${mod.packageName}) [${script}]`
+  for (const layer of layers) {
+    await Promise.all(
+      layer.map(async (mod) => {
+        const script =
+          preferScript && mod.scripts[preferScript] ? preferScript : "build";
+        console.log(
+          `Building module: ${mod.dirName} (${mod.packageName}) [${script}]`
+        );
+        const result = await runBuildCommand(mod.path, script);
+        if (result.status !== 0) {
+          console.error(`Failed to build module: ${mod.dirName}`);
+          process.exit(1);
+        }
+      })
     );
-    const result = await runBuildCommand(mod.path, script);
-    if (result.status !== 0) {
-      console.error(`Failed to build module: ${mod.dirName}`);
-      process.exit(1);
-    }
   }
 }
 
