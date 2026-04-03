@@ -31,7 +31,11 @@ const config: ForgeConfig = {
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({}),
+    new MakerSquirrel({
+      title: "Open Orpheus",
+      description: "An open-source Netease Cloud Music client",
+      authors: "YUCLing",
+    }),
     new MakerZIP({}, ["darwin"]),
     new MakerRpm({
       options: {
