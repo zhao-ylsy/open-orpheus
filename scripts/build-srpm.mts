@@ -189,12 +189,7 @@ spec = spec.replace(/^%install/m, `${buildSection}\n%install`);
 await writeFile(specPath, spec);
 
 // --- Step 6: Build the SRPM ---
-await execFile("rpmbuild", [
-  "--define",
-  `_topdir ${outDir}`,
-  "-bs",
-  specPath,
-]);
+await execFile("rpmbuild", ["--define", `_topdir ${outDir}`, "-bs", specPath]);
 
 // --- Step 7: Clean up ---
 const srpms = await readdir(srpmsDir);

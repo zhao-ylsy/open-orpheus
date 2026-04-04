@@ -41,7 +41,6 @@
     "@typescript-eslint/parser": "^8.57.1",
     "cookie": "^1.1.1",
     "electron": "40.8.5",
-    "electron-installer-redhat": "^3.4.0",
     "eslint": "^9.39.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
@@ -64,6 +63,9 @@
     "@open-orpheus/window": "workspace:*",
     "electron-squirrel-startup": "^1.0.1",
     "sharp": "^0.34.5"
+  },
+  "optionalDependencies": {
+    "electron-installer-redhat": "^3.4.0"
   },
   "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319"
 }
