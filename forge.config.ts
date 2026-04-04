@@ -9,6 +9,8 @@ import { FuseV1Options, FuseVersion } from "@electron/fuses";
 
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives"; // TODO: Remove in Electron Forge 8
 
+import options from "./packaging/options.json";
+
 const config: ForgeConfig = {
   packagerConfig: {
     asar: {
@@ -31,32 +33,13 @@ const config: ForgeConfig = {
   },
   rebuildConfig: {},
   makers: [
-    new MakerSquirrel({
-      title: "Open Orpheus",
-      description: "An open-source Netease Cloud Music client",
-      authors: "YUCLing",
-    }),
+    new MakerSquirrel(options.squirrel),
     new MakerZIP({}, ["darwin"]),
     new MakerRpm({
-      options: {
-        icon: "assets/icon.png",
-        name: "open-orpheus",
-        productName: "Open Orpheus",
-        description: "An open-source Netease Cloud Music client",
-        license: "MIT",
-        homepage: "https://github.com/YUCLing/open-orpheus",
-        categories: ["Audio", "AudioVideo", "Network"],
-      },
+      options: options.rpm as unknown,
     }),
     new MakerDeb({
-      options: {
-        icon: "assets/icon.png",
-        name: "open-orpheus",
-        productName: "Open Orpheus",
-        description: "An open-source Netease Cloud Music client",
-        homepage: "https://github.com/YUCLing/open-orpheus",
-        categories: ["Audio", "AudioVideo", "Network"],
-      },
+      options: options.deb as unknown,
     }),
   ],
   plugins: [
