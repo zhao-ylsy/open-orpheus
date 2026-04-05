@@ -3,6 +3,8 @@
     "svelte.svelte-vscode",
     "bradlc.vscode-tailwindcss",
     "esbenp.prettier-vscode",
-    "dbaeumer.vscode-eslint"
+    "dbaeumer.vscode-eslint",
+    "editorconfig.editorconfig",
+    "rust-lang.rust-analyzer"
   ]
 }
