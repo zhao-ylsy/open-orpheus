@@ -15,6 +15,7 @@
 </script>
 
 <script lang="ts">
+  import { Button } from "$lib/components/ui/button";
   import FileQuestionMark from "@lucide/svelte/icons/file-question-mark";
   import LoaderCircle from "@lucide/svelte/icons/loader-circle";
 
@@ -45,12 +46,9 @@
       <h1 class="self-end text-2xl font-bold">缺少包文件</h1>
       <p class="text-gray-600">所需的包文件缺失或无效。是否尝试自动下载？</p>
     </div>
-    <button
-      onclick={startDownload}
-      class="cursor-pointer rounded-sm bg-gray-100 px-6 py-2 shadow shadow-gray-400 hover:bg-gray-200 active:bg-gray-300"
+    <Button onclick={startDownload} size="lg" class="cursor-pointer px-6"
+      >下载</Button
     >
-      下载
-    </button>
   {:else}
     <div class="flex w-full max-w-sm flex-col gap-4">
       <div class="flex items-center gap-3">

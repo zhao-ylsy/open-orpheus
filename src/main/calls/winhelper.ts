@@ -292,7 +292,10 @@ registerCallHandler<MenuRequest, void>(
     const parsedMenuData = parseMenuData(data);
     for (let i = 0; i < parsedMenuData.content.length; i++) {
       const item = parsedMenuData.content[i];
-      if (item.image_path && item.image_path.indexOf("menu/setting.svg") !== -1) {
+      if (
+        item.image_path &&
+        item.image_path.indexOf("menu/setting.svg") !== -1
+      ) {
         parsedMenuData.content.splice(i + 1, 0, {
           menu: true,
           separator: false,
