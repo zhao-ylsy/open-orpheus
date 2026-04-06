@@ -1,8 +1,10 @@
 import js from "@eslint/js";
 import globals from "globals";
 import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 import importPlugin from "eslint-plugin-import";
 import eslintConfigPrettier from "eslint-config-prettier";
+import svelte from "eslint-plugin-svelte";
 
 export default [
   {
@@ -43,5 +45,34 @@ export default [
       "@typescript-eslint/no-require-imports": "off",
     },
   },
+  {
+    files: ["gui/**/*.{svelte,ts,js}"],
+    languageOptions: {
+      globals: {
+        __APP_VERSION__: "readonly",
+      },
+    },
+    settings: {
+      "import/resolver": {
+        typescript: {
+          project: "gui/tsconfig.json",
+        },
+      },
+    },
+  },
+  ...svelte.configs["flat/recommended"],
+  {
+    files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
+    languageOptions: {
+      parserOptions: {
+        parser: tsParser,
+      },
+    },
+    rules: {
+      "import/namespace": "off",
+      "import/no-duplicates": "off",
+    },
+  },
   eslintConfigPrettier,
+  ...svelte.configs["flat/prettier"],
 ];

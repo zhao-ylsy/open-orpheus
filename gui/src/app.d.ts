@@ -1,6 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
-import type { DesktopLyricsAPI } from "$lib/types";
+import type { DesktopLyricsAPI, DesktopLyricsPreviewAPI } from "$lib/types";
 
 declare global {
   namespace App {
@@ -13,6 +13,7 @@ declare global {
 
   interface Window {
     desktopLyrics?: DesktopLyricsAPI;
+    desktopLyricsPreview?: DesktopLyricsPreviewAPI;
   }
 
   const __APP_VERSION__: string;

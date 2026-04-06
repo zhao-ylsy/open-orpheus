@@ -63,7 +63,7 @@
   }
 
   onMount(async () => {
-    const api = (window as any).desktopLyricsPreview;
+    const api = window.desktopLyricsPreview;
     if (!api) return;
 
     const { style, text } = await api.requestInit();

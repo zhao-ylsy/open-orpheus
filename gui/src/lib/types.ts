@@ -45,4 +45,11 @@ export interface DesktopLyricsAPI {
   onPlayStateChange(callback: (playing: boolean) => void): void;
   requestFullUpdate(): void;
   dragWindow(): void;
+  changeOrientation(): void;
+  performAction(action: string): void;
+}
+
+export interface DesktopLyricsPreviewAPI {
+  requestInit(): Promise<{ style: Record<string, unknown>; text: string }>;
+  ready(): void;
 }

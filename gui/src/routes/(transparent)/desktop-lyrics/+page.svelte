@@ -66,18 +66,18 @@
     }
   }
 
-  // svelte-ignore state_referenced_locally -- we need this to trigger updates when vertical changes
+  // svelte-ignore state_referenced_locally
   let previousVertical = lyricStyle.vertical;
   $effect(() => {
     if (lyricStyle.vertical !== previousVertical) {
       previousVertical = lyricStyle.vertical;
-      const api = (window as any).desktopLyrics;
+      const api = window.desktopLyrics;
       api?.changeOrientation();
     }
   });
 
   onMount(() => {
-    const api = (window as any).desktopLyrics;
+    const api = window.desktopLyrics;
     if (!api) return;
 
     api.onLyricsUpdate((data: LyricsData) => {
@@ -117,7 +117,7 @@
   });
 
   function onDrag() {
-    const api = (window as any).desktopLyrics;
+    const api = window.desktopLyrics;
     api?.dragWindow();
   }
 </script>
@@ -134,7 +134,7 @@
       ? ' flex-col'
       : ''}"
   >
-    {#each items as [icon, action, disabled]}
+    {#each items as [icon, action, disabled] (action)}
       <IconButton
         normal={`gui://skin/lrc/${icon}_normal.svg`}
         hover={`gui://skin/lrc/${icon}_over.svg`}
@@ -144,7 +144,7 @@
           e.stopPropagation();
         }}
         onclick={() => {
-          const api = (window as any).desktopLyrics;
+          const api = window.desktopLyrics;
           api?.performAction(action);
         }}
         class="cursor-pointer"
@@ -152,7 +152,6 @@
       />
     {/each}
   </div>
-  <!-- svelte-ignore attribute_quoted -->
   <Lyrics
     {lyricsData}
     {currentTime}
