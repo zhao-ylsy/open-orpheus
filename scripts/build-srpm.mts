@@ -75,20 +75,17 @@ for (const fn of installer.contentFunctions) {
   await (installer[fn] as () => Promise<void>)();
 }
 
-// Fix the binary symlink to use the correct relative path instead of the staging dir path
-const installerName = (installer.options as { name: string }).name;
-const installerBin = (installer.options as { bin: string }).bin;
-const symlinkPath = resolve(
-  installer.stagingDir,
-  "BUILD/usr/bin",
-  installerName
-);
-await unlink(symlinkPath);
-await symlink(`../lib/${installerName}/${installerBin}`, symlinkPath);
-
 // Copy staging dir to outDir
 await mkdir(outDir, { recursive: true });
 await cp(installer.stagingDir, outDir, { recursive: true });
+
+// Fix the binary symlink — fs.cp resolves relative symlinks to absolute paths
+// based on the source, so we must recreate it after copying.
+const installerName = (installer.options as { name: string }).name;
+const installerBin = (installer.options as { bin: string }).bin;
+const symlinkPath = resolve(outDir, "BUILD/usr/bin", installerName);
+await unlink(symlinkPath);
+await symlink(`../lib/${installerName}/${installerBin}`, symlinkPath);
 
 // --- Step 3: Remove the fake app dir from BUILD (nothing to ship) ---
 await rm(resolve(outDir, "BUILD/usr/lib", rpmOptions.name), {
