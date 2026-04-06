@@ -18,7 +18,7 @@ export default function showManageWindow() {
   if (GUI_VITE_DEV_SERVER_URL) {
     manageWnd.loadURL(GUI_VITE_DEV_SERVER_URL);
   } else {
-    manageWnd.loadFile(path.join(__dirname, "gui/index.html"));
+    manageWnd.loadURL("gui://frontend/");
   }
   manageWnd.webContents.ipc.handle("manage.getWebPackCommitHash", async () => {
     return webPack.getCommitHash();

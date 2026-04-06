@@ -41,7 +41,7 @@ export default function createDesktopLyricsWindow() {
   if (GUI_VITE_DEV_SERVER_URL) {
     desktopLyricsWindow.loadURL(`${GUI_VITE_DEV_SERVER_URL}/desktop-lyrics`);
   } else {
-    desktopLyricsWindow.loadFile(join(__dirname, "gui/desktop-lyrics.html"));
+    desktopLyricsWindow.loadURL("gui://frontend/desktop-lyrics");
   }
   setWindowId(desktopLyricsWindow, "desktop_lyrics");
 
@@ -173,7 +173,7 @@ export async function createDesktopLyricsPreview(
   if (GUI_VITE_DEV_SERVER_URL) {
     previewWindow.loadURL(`${GUI_VITE_DEV_SERVER_URL}/desktop-lyrics-preview`);
   } else {
-    previewWindow.loadFile(join(__dirname, "gui/desktop-lyrics-preview.html"));
+    previewWindow.loadURL("gui://frontend/desktop-lyrics-preview");
   }
 
   return new Promise<[Buffer, [number, number]]>((resolve, reject) => {

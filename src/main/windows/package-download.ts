@@ -21,7 +21,7 @@ export default function showPackgeDownloadWindow(): Promise<void> {
     if (GUI_VITE_DEV_SERVER_URL) {
       wnd.loadURL(GUI_VITE_DEV_SERVER_URL + "/package-download");
     } else {
-      wnd.loadFile(path.join(__dirname, "gui/package-download.html"));
+      wnd.loadURL("gui://frontend/package-download");
     }
     wnd.webContents.ipc.on("download-package", () => {
       downloadPackage((progress) => {
