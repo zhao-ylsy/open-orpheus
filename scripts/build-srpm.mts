@@ -7,6 +7,8 @@ import {
   readFile,
   readdir,
   rm,
+  symlink,
+  unlink,
   writeFile,
 } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
@@ -72,6 +74,17 @@ for (const fn of installer.contentFunctions) {
   if (fn === "copyApplication") continue;
   await (installer[fn] as () => Promise<void>)();
 }
+
+// Fix the binary symlink to use the correct relative path instead of the staging dir path
+const installerName = (installer.options as { name: string }).name;
+const installerBin = (installer.options as { bin: string }).bin;
+const symlinkPath = resolve(
+  installer.stagingDir,
+  "BUILD/usr/bin",
+  installerName
+);
+await unlink(symlinkPath);
+await symlink(`../lib/${installerName}/${installerBin}`, symlinkPath);
 
 // Copy staging dir to outDir
 await mkdir(outDir, { recursive: true });
