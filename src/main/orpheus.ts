@@ -3,8 +3,11 @@ import mime from "mime";
 import { extname } from "node:path";
 import { webPack } from "./pack";
 import { sanitizeRelativePath } from "./util";
-import { storage as storageDir } from "./folders";
+import { storage as storageDir, httpCache } from "./folders";
 import { readFile } from "node:fs/promises";
+import { URLCacheManager } from "./cache/URLCacheManager";
+
+const urlCache = new URLCacheManager(httpCache);
 
 class NetworkError extends Error {
   constructor(message: string, options?: ErrorOptions) {
@@ -69,8 +72,7 @@ export async function loadFromOrpheusUrl(url: string): Promise<{
       if (!url) {
         throw new LoadError("Bad Request: Missing URL parameter", 400);
       }
-      // TODO: Implement caching logic
-      try {
+      const cached = await urlCache.getOrFetch(url, async () => {
         const response = await fetch(url);
         if (!response.ok) {
           throw new LoadError(
@@ -80,12 +82,13 @@ export async function loadFromOrpheusUrl(url: string): Promise<{
         }
         const contentType =
           response.headers.get("Content-Type") || "application/octet-stream";
-        const content = Buffer.from(await response.arrayBuffer());
-        return { content, contentType };
-      } catch (error) {
-        if (error instanceof LoadError) throw error;
-        throw new LoadError("Failed to fetch resource", 502);
-      }
+        const body = Buffer.from(await response.arrayBuffer());
+        return { contentType, body };
+      });
+      return {
+        content: Buffer.from(cached.body) as Buffer<ArrayBuffer>,
+        contentType: cached.contentType,
+      };
     }
     default:
       throw new NetworkError(`Unknown URL hostname: ${parsedUrl.hostname}`);
