@@ -1,5 +1,6 @@
 use egui::{FontData, FontDefinitions, FontFamily};
 use font_kit::source::SystemSource;
+use std::sync::OnceLock;
 
 #[cfg(target_os = "linux")]
 use std::process::Command;
@@ -13,6 +14,11 @@ const DEFAULT_FONTS: &[&str] = &[
 ];
 
 pub fn get_font_definitions() -> FontDefinitions {
+    static FONT_DEFINITIONS: OnceLock<FontDefinitions> = OnceLock::new();
+    FONT_DEFINITIONS.get_or_init(build_font_definitions).clone()
+}
+
+fn build_font_definitions() -> FontDefinitions {
     let mut fonts = FontDefinitions::default();
 
     let system_source = SystemSource::new();
@@ -23,15 +29,14 @@ pub fn get_font_definitions() -> FontDefinitions {
         if let Ok(output) = Command::new("fc-match")
             .args(["-f", "%{family}\n", "sans-serif:lang=zh-cn"])
             .output()
+            && output.status.success()
         {
-            if output.status.success() {
-                let output_text = String::from_utf8_lossy(&output.stdout);
-                let first_line = output_text.lines().next().unwrap_or_default();
-                let fc_fonts = first_line.split(',').next().unwrap_or_default().trim();
+            let output_text = String::from_utf8_lossy(&output.stdout);
+            let first_line = output_text.lines().next().unwrap_or_default();
+            let fc_fonts = first_line.split(',').next().unwrap_or_default().trim();
 
-                if !fc_fonts.is_empty() && !candidates.iter().any(|f| f.as_str() == fc_fonts) {
-                    candidates.insert(0, fc_fonts.to_string());
-                }
+            if !fc_fonts.is_empty() && !candidates.iter().any(|f| f.as_str() == fc_fonts) {
+                candidates.insert(0, fc_fonts.to_string());
             }
         }
     }
