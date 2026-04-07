@@ -1,6 +1,9 @@
 use egui::{FontData, FontDefinitions, FontFamily};
 use font_kit::source::SystemSource;
 
+#[cfg(target_os = "linux")]
+use std::process::Command;
+
 const DEFAULT_FONTS: &[&str] = &[
     "Noto Sans CJK SC",
     "Microsoft YaHei",
@@ -13,22 +16,48 @@ pub fn get_font_definitions() -> FontDefinitions {
     let mut fonts = FontDefinitions::default();
 
     let system_source = SystemSource::new();
+    let mut candidates: Vec<String> = DEFAULT_FONTS.iter().map(|s| (*s).to_string()).collect();
 
-    'search_font: for &font_name in DEFAULT_FONTS {
-        if let Ok(handles) = system_source.select_family_by_name(font_name) {
+    #[cfg(target_os = "linux")]
+    {
+        if let Ok(output) = Command::new("fc-match")
+            .args(["-f", "%{family}\n", "sans-serif:lang=zh-cn"])
+            .output()
+        {
+            let fc_fonts = String::from_utf8_lossy(&output.stdout)
+                .lines()
+                .next()
+                .unwrap_or_default()
+                .split(',')
+                .next()
+                .unwrap_or_default()
+                .trim()
+                .to_string();
+
+            if !fc_fonts.is_empty() && !candidates.iter().any(|f| f == &fc_fonts) {
+                candidates.insert(0, fc_fonts);
+            }
+        }
+    }
+
+    for font_name in candidates {
+        if let Ok(handles) = system_source.select_family_by_name(&font_name) {
             for handle in handles.fonts() {
                 if let Ok(font) = handle.load() {
-                    let font_data = font.copy_font_data().unwrap();
+                    let Some(font_data) = font.copy_font_data() else {
+                        continue;
+                    };
                     fonts.font_data.insert(
-                        font_name.to_string(),
+                        font_name.clone(),
                         std::sync::Arc::new(FontData::from_owned(font_data.to_vec())),
                     );
-                    fonts
-                        .families
-                        .get_mut(&FontFamily::Proportional)
-                        .unwrap()
-                        .insert(0, font_name.to_string());
-                    break 'search_font;
+
+                    if let Some(family) = fonts.families.get_mut(&FontFamily::Proportional)
+                        && !family.iter().any(|name| name == &font_name)
+                    {
+                        family.insert(0, font_name.clone());
+                    }
+                    break;
                 }
             }
         }
