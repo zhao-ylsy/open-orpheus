@@ -169,14 +169,7 @@ registerCallHandler<[], void>("storage.queryCacheTracks", async (event) => {
   const wnd = event.sender;
   if (!wnd) return;
   const tracks = await playCacheManager.queryCacheTracks();
-  wnd.send(
-    "channel.call",
-    "storage.onquerycachetracks",
-    tracks.map((meta) => ({
-      ...meta,
-      resourceType: "track",
-    }))
-  );
+  wnd.send("channel.call", "storage.onquerycachetracks", tracks);
   return;
 });
 
