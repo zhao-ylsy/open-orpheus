@@ -1,6 +1,7 @@
 import { ipcMain, protocol } from "electron";
 import type { AudioPlayInfo } from "../preload/Player";
 import { mainWindow } from "./window";
+import { playCacheManager } from "./cache/PlayCacheManager";
 
 // #region Interval helpers
 
@@ -72,8 +73,23 @@ function onProgress(progress: number): void {
 }
 
 function onComplete(): void {
-  // TODO: Actual caching
-  console.log("[audioStreamer] download complete");
+  if (!songBuffer || !currentAudioPlayInfo) return;
+  const sb = songBuffer;
+  const playInfo = currentAudioPlayInfo;
+
+  console.log("playInfo", playInfo);
+
+  playCacheManager
+    .cacheTrack(sb.songId, sb.buffer, {
+      md5: playInfo.md5,
+      bitrate: playInfo.bitrate,
+      playInfoStr: playInfo.playInfoStr,
+      volumeGain: 0,
+      fileSize: sb.totalSize,
+    })
+    .catch((err) => {
+      console.error("[audioStreamer] failed to cache track:", err);
+    });
 }
 
 // #endregion

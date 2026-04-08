@@ -7,6 +7,11 @@ import { sanitizeRelativePath } from "../util";
 import { getWebDb } from "../database";
 import { existsSync, mkdirSync } from "node:fs";
 import { app } from "electron";
+import {
+  playCacheManager,
+  type PlayCacheConfig,
+  type PlayCacheInfo,
+} from "../cache/PlayCacheManager";
 
 registerCallHandler<[string, string, string], [string, string]>(
   "storage.init",
@@ -156,27 +161,36 @@ registerCallHandler<[string, boolean, string, number, string[]], void>(
   "storage.downloadscanner",
   (event) => {
     // TODO: Scan download dir for downloaded music
-    event.sender.send("channel.send", "storage.ondownloadscanner");
+    event.sender.send("channel.call", "storage.ondownloadscanner");
   }
 );
 
-// TODO: Track cache
-registerCallHandler<
-  [],
-  {
-    bitrate: number;
-    cached: number;
-    dfsId: "";
-    format: "";
-    lastAccessTime: number;
-    lastModifyTime: number;
-    md5: string;
-    playInfoExist: boolean;
-    playInfoStr: string;
-    songId: string;
-    volumeGain: number;
-  }[]
->("storage.queryCacheTracks", () => []);
+registerCallHandler<[], void>("storage.queryCacheTracks", async (event) => {
+  const wnd = event.sender;
+  if (!wnd) return;
+  const tracks = await playCacheManager.queryCacheTracks();
+  wnd.send(
+    "channel.call",
+    "storage.onquerycachetracks",
+    tracks.map((meta) => ({
+      ...meta,
+      resourceType: "track",
+    }))
+  );
+  return;
+});
+
+registerCallHandler<[PlayCacheConfig], void>(
+  "storage.setPlayCacheConfig",
+  (event, config) => {
+    playCacheManager.setConfig(config);
+  }
+);
+
+registerCallHandler<[], [PlayCacheInfo]>("storage.playCacheInfo", async () => {
+  const info = await playCacheManager.getInfo();
+  return [info];
+});
 
 registerCallHandler<[string], void>(
   "storage.getTempFile",

@@ -10,3 +10,4 @@ export const storage = resolve(data, "storage");
 export const cache = resolve(data, "cache");
 export const lyricCache = resolve(cache, "lyrics");
 export const httpCache = resolve(cache, "http");
+export const playCache = resolve(cache, "play");

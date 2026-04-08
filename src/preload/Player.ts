@@ -79,7 +79,7 @@ export type AudioPlayInfo = {
   aiprocessorRatio: number;
   audioFormat: string;
   audioType: string;
-  birate: number;
+  bitrate: number;
   br: string;
   destLevel: string;
   expireTime: number;
