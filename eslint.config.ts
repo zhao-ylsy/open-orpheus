@@ -50,6 +50,7 @@ export default [
     languageOptions: {
       globals: {
         __APP_VERSION__: "readonly",
+        orpheus: "readonly",
       },
     },
     settings: {

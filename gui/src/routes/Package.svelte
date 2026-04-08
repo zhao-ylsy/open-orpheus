@@ -1,8 +1,6 @@
 <script>
   import { Button } from "$lib/components/ui/button";
 
-  import "./types";
-
   import versions from "../../../versions.json";
 </script>
 

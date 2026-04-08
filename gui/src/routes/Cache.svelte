@@ -1,5 +1,4 @@
 <script lang="ts">
-  import "./types";
   import { Button } from "$lib/components/ui/button";
 
   function formatBytes(bytes: number): string {
