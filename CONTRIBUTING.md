@@ -13,7 +13,7 @@
 
 ## 行为准则
 
-请保持友好、包容的交流态度。我们希望 Open Orpheus 对所有人都是一个友好的开源社区。
+请保持友好、包容的交流态度。我们希望 Open Orpheus 对所有人都是一个友好的开源社区。详见 [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)。
 
 ## 提交 Issue
 

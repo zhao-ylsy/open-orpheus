@@ -13,7 +13,7 @@ First off, thank you for taking the time to contribute to Open Orpheus! Whether 
 
 ## Code of Conduct
 
-Please be kind and respectful in all interactions. We want Open Orpheus to be a welcoming community for everyone.
+Please be kind and respectful in all interactions. We want Open Orpheus to be a welcoming community for everyone. See [CODE_OF_CONDUCT_en.md](./CODE_OF_CONDUCT_en.md) for the full text.
 
 ## Submitting Issues
 
