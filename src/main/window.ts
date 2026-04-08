@@ -97,6 +97,8 @@ export function getWindowById(id: string): BrowserWindow | undefined {
 }
 
 export function setMaximumSize(wnd: BrowserWindow, x: number, y: number) {
+  x = Math.round(x);
+  y = Math.round(y);
   if (shouldRespectSizeConstraints(wnd)) {
     wnd.setMaximumSize(x, y);
   }
@@ -107,6 +109,8 @@ export function setMaximumSize(wnd: BrowserWindow, x: number, y: number) {
 }
 
 export function setMinimumSize(wnd: BrowserWindow, x: number, y: number) {
+  x = Math.round(x);
+  y = Math.round(y);
   if (shouldRespectSizeConstraints(wnd)) {
     wnd.setMinimumSize(x, y);
   }
