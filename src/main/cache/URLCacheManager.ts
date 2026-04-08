@@ -16,13 +16,14 @@ export class URLCacheManager {
     string,
     Promise<{ contentType: string; body: Buffer }>
   >();
-  private readonly entries = new Map<string, number>();
+  private readonly entries = new Map<string, { mtime: number; size: number }>();
+  private totalSizeBytes = 0;
   private readonly initPromise: Promise<void>;
   private evictionPromise: Promise<void> | null = null;
 
   constructor(
     private readonly cacheDir: string,
-    private readonly maxEntries: number = 500
+    private readonly maxSizeBytes: number = 20 * 1024 * 1024
   ) {
     this.initPromise = this.buildEntriesIndex();
   }
@@ -35,7 +36,7 @@ export class URLCacheManager {
           try {
             const s = await stat(resolve(this.cacheDir, name));
             if (!s.isFile()) return null;
-            return { name, mtime: s.mtimeMs };
+            return { name, mtime: s.mtimeMs, size: s.size };
           } catch {
             return null;
           }
@@ -44,7 +45,8 @@ export class URLCacheManager {
 
       for (const entry of stats) {
         if (!entry) continue;
-        this.entries.set(entry.name, entry.mtime);
+        this.entries.set(entry.name, { mtime: entry.mtime, size: entry.size });
+        this.totalSizeBytes += entry.size;
       }
     } catch {
       // Directory may not exist yet.
@@ -80,10 +82,17 @@ export class URLCacheManager {
       const now = new Date();
 
       void utimes(filePath, now, now).catch(() => {});
-      this.entries.set(key, now.getTime());
+      const existing = this.entries.get(key);
+      if (existing) {
+        existing.mtime = now.getTime();
+      }
       return this.decode(data);
     } catch {
-      this.entries.delete(key);
+      const existing = this.entries.get(key);
+      if (existing) {
+        this.totalSizeBytes -= existing.size;
+        this.entries.delete(key);
+      }
       return null;
     }
   }
@@ -93,26 +102,20 @@ export class URLCacheManager {
     await mkdir(this.cacheDir, { recursive: true });
     const key = this.hashUrl(url);
     const filePath = resolve(this.cacheDir, key);
-    await writeFile(filePath, this.encode(contentType, body));
-    this.entries.set(key, Date.now());
+    const encoded = this.encode(contentType, body);
+    await writeFile(filePath, encoded);
+    const existing = this.entries.get(key);
+    if (existing) {
+      this.totalSizeBytes -= existing.size;
+    }
+    this.entries.set(key, { mtime: Date.now(), size: encoded.length });
+    this.totalSizeBytes += encoded.length;
     await this.evictIfNeeded();
   }
 
   async getStats(): Promise<{ entryCount: number; sizeBytes: number }> {
     await this.initPromise;
-    const entryCount = this.entries.size;
-    let sizeBytes = 0;
-    await Promise.all(
-      [...this.entries.keys()].map(async (name) => {
-        try {
-          const s = await stat(resolve(this.cacheDir, name));
-          sizeBytes += s.size;
-        } catch {
-          // File may have been evicted
-        }
-      })
-    );
-    return { entryCount, sizeBytes };
+    return { entryCount: this.entries.size, sizeBytes: this.totalSizeBytes };
   }
 
   async clear(): Promise<void> {
@@ -123,6 +126,7 @@ export class URLCacheManager {
       // Already gone
     }
     this.entries.clear();
+    this.totalSizeBytes = 0;
   }
 
   async getOrFetch(
@@ -149,28 +153,43 @@ export class URLCacheManager {
   }
 
   private async evictIfNeeded(): Promise<void> {
-    if (this.entries.size <= this.maxEntries) return;
+    if (this.totalSizeBytes <= this.maxSizeBytes) return;
     if (this.evictionPromise) return this.evictionPromise;
 
     this.evictionPromise = (async () => {
-      while (this.entries.size > this.maxEntries) {
+      while (this.totalSizeBytes > this.maxSizeBytes) {
         const sortedEntries = [...this.entries.entries()]
-          .map(([name, mtime]) => ({ name, mtime }))
+          .map(([name, { mtime, size }]) => ({ name, mtime, size }))
           .sort((a, b) => a.mtime - b.mtime);
 
-        const overflow = this.entries.size - this.maxEntries;
-        const toDelete = sortedEntries.slice(0, overflow);
+        const excessBytes = this.totalSizeBytes - this.maxSizeBytes;
+        let toFreeBytes = 0;
+        const toDelete: typeof sortedEntries = [];
+        for (const entry of sortedEntries) {
+          toDelete.push(entry);
+          toFreeBytes += entry.size;
+          if (toFreeBytes >= excessBytes) break;
+        }
+
+        let anyDeleted = false;
         await Promise.all(
-          toDelete.map(({ name }) =>
+          toDelete.map(({ name, size }) =>
             unlink(resolve(this.cacheDir, name))
               .then(() => {
                 this.entries.delete(name);
+                this.totalSizeBytes -= size;
+                anyDeleted = true;
               })
               .catch(() => {
-                this.entries.delete(name);
+                // Deletion failed (e.g. file open on Windows) — leave entry
+                // tracked so it will be retried on the next eviction pass.
               })
           )
         );
+
+        // If nothing could be deleted this pass (all files in use), give up
+        // to avoid an infinite loop.
+        if (!anyDeleted) break;
       }
     })().finally(() => {
       this.evictionPromise = null;
