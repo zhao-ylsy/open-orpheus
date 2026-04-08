@@ -7,7 +7,14 @@ import { playCacheManager } from "../cache/PlayCacheManager";
 import { urlCache } from "../orpheus";
 import { lyricCache } from "../folders";
 
+let manageWndInstance: BrowserWindow | null = null;
+
 export default function showManageWindow() {
+  if (manageWndInstance && !manageWndInstance.isDestroyed()) {
+    manageWndInstance.focus();
+    return;
+  }
+
   const manageWnd = new BrowserWindow({
     title: "管理 Open Orpheus",
     width: 1000,
@@ -17,6 +24,10 @@ export default function showManageWindow() {
       partition: "open-orpheus",
       preload: path.join(__dirname, "manage.js"),
     },
+  });
+  manageWndInstance = manageWnd;
+  manageWnd.on("closed", () => {
+    manageWndInstance = null;
   });
   manageWnd.setMenuBarVisibility(false);
   if (GUI_VITE_DEV_SERVER_URL) {
