@@ -36,34 +36,6 @@ https://aur.archlinux.org/packages/open-orpheus
 
 前往 [Releases](https://github.com/YUCLing/open-orpheus/releases/latest) 下载
 
-## 开发
-
-如果你要参与开发，需要先准备好 Node 和 Rust（推荐 Node v24、Rust 1.92）。
-
-根项目这边的工作流和普通的 Electron Forge 项目差不多，不过 Open Orpheus 自己有一些原生模块，所以还得多做几步配置。
-
-下面的步骤默认使用 `pnpm` 作为 Node 的包管理器。
-
-### 环境准备
-
-#### 安装依赖
-
-在根目录执行一次即可，pnpm workspace 会自动为所有包（包括原生模块）安装依赖：
-
-```sh
-pnpm install
-```
-
-#### 构建模块
-
-`modules` 文件夹里有几个 Open Orpheus 运行所需的原生模块。
-
-在根目录执行：
-
-```sh
-pnpm build:modules # 构建所有模块（会同时构建 Rust 和 Node 代码）
-```
-
 ### 资源文件
 
 这个项目不会打包某些必需资源，因为它们归网易所有。

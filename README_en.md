@@ -34,34 +34,6 @@ https://aur.archlinux.org/packages/open-orpheus
 
 Download from [Releases](https://github.com/YUCLing/open-orpheus/releases/latest)
 
-## Development
-
-You will need Node and Rust to work with this project (Node v24 and Rust 1.92 are recommended).
-
-For root project, everything works just like any other Electron Forge project, but Open Orpheus has some its own native modules, it requires a few more steps to setup.
-
-In the following steps, `pnpm` will be used as Node's package manager.
-
-### Setup
-
-#### Install dependencies
-
-Run this once at the root — pnpm workspaces will install dependencies for all packages including native modules:
-
-```sh
-pnpm install
-```
-
-#### Build modules
-
-Inside `modules` folder, there are a few native modules that Open Orpheus require to run.
-
-Run from the root directory:
-
-```sh
-pnpm build:modules # Build all modules (will build both Rust and Node code)
-```
-
 ### Resources
 
 This project does not bundle some required resources because they are owned by NetEase.
