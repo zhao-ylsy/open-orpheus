@@ -11,18 +11,29 @@ use x11rb::{
     },
 };
 
+#[cfg(target_arch = "x86_64")]
 mod wayland;
 
 #[neon::export]
 fn is_wayland() -> bool {
-    wayland::is_wayland()
+    #[cfg(target_arch = "x86_64")]
+    {
+        wayland::is_wayland()
+    }
+    #[cfg(not(target_arch = "x86_64"))]
+    {
+        false
+    }
 }
 
 #[neon::export]
 fn drag_window<'cx>(cx: &mut Cx<'cx>, handle: Handle<JsBuffer>) -> NeonResult<()> {
+    #[cfg(target_arch = "x86_64")]
     if wayland::is_wayland() {
         wayland::send_xdg_toplevel_move();
-    } else {
+        return Ok(());
+    }
+    {
         let Ok((conn, _)) = x11rb::connect(None) else {
             let err_msg = cx.string("Failed to connect to X11 server");
             return cx.throw(err_msg);
@@ -101,6 +112,7 @@ fn drag_window<'cx>(cx: &mut Cx<'cx>, handle: Handle<JsBuffer>) -> NeonResult<()
 fn main(mut cx: ModuleContext) -> NeonResult<()> {
     neon::registered().export(&mut cx)?;
 
+    #[cfg(target_arch = "x86_64")]
     wayland::init_wayland_hook();
 
     Ok(())
@@ -108,6 +120,7 @@ fn main(mut cx: ModuleContext) -> NeonResult<()> {
 
 #[unsafe(no_mangle)]
 pub extern "C" fn on_unload() {
+    #[cfg(target_arch = "x86_64")]
     wayland::remove_wayland_hook();
 }
 
