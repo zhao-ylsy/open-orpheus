@@ -11,7 +11,6 @@ import os from "node:os";
 import { mkdir } from "node:fs/promises";
 import started from "electron-squirrel-startup";
 
-import { isWayland } from "@open-orpheus/window";
 import { onExit } from "@open-orpheus/lifecycle";
 
 // Handle errors as early as possible
@@ -31,7 +30,6 @@ import { prepareDeviceId } from "./main/device";
 import { CORE_VERSION } from "./constants";
 import { initializeDatabases } from "./main/database";
 import { loadWebPack, webPack } from "./main/pack";
-import { createApp } from "./main/ui";
 import registerGuiScheme from "./main/gui";
 import showPackgeDownloadWindow from "./main/windows/package-download";
 import registerAudioStreamer from "./main/audioStreamer";
@@ -187,8 +185,6 @@ app.on("ready", async () => {
     }
 
     await webPack.readPack();
-
-    await createApp(os.platform() === "linux" ? isWayland() : false);
 
     createDesktopLyricsWindow();
     createWindow();
