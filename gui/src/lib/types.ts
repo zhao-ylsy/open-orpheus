@@ -70,4 +70,12 @@ export interface MenuAPI {
   btnClick(btnId: string): void;
   close(): void;
   isWayland(): boolean;
+  isSubmenu(): boolean;
+  openSubmenu(
+    items: unknown[],
+    templates: Record<string, string>,
+    x: number,
+    y: number
+  ): void;
+  closeSubmenu(): void;
 }

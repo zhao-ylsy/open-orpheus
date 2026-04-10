@@ -124,6 +124,7 @@ function createOverlayWindow(): BrowserWindow {
 export default class AppMenu extends EventTarget {
   private onClick: MenuClickHandler | null = null;
   private closed = false;
+  private submenuWindow: BrowserWindow | null = null;
   /** style path → raw XML string, preloaded from skin pack */
   templates: Record<string, string> = {};
 
@@ -179,6 +180,11 @@ export default class AppMenu extends EventTarget {
 
   close() {
     this.closed = true;
+
+    if (this.submenuWindow && !this.submenuWindow.isDestroyed()) {
+      this.submenuWindow.destroy();
+      this.submenuWindow = null;
+    }
 
     if (process.platform === "linux" && isWayland()) {
       // Destroy the overlay so the next show() creates a fresh window
@@ -315,11 +321,113 @@ export default class AppMenu extends EventTarget {
       cleanup();
     };
 
+    const closeSubmenuWindow = () => {
+      if (this.submenuWindow && !this.submenuWindow.isDestroyed()) {
+        this.submenuWindow.destroy();
+        this.submenuWindow = null;
+      }
+    };
+
+    const openSubmenuWindow = (
+      items: unknown[],
+      templates: Record<string, string>,
+      relX: number,
+      relY: number
+    ) => {
+      closeSubmenuWindow();
+      const bounds = wnd.getBounds();
+      const screenX = bounds.x + Math.round(relX);
+      const screenY = bounds.y + Math.round(relY);
+      const subDisplay = screen.getDisplayNearestPoint({
+        x: screenX,
+        y: screenY,
+      });
+
+      const sub = new BrowserWindow({
+        show: false,
+        frame: false,
+        transparent: true,
+        backgroundColor: "#00000000",
+        hasShadow: true,
+        skipTaskbar: true,
+        resizable: false,
+        alwaysOnTop: true,
+        focusable: true,
+        webPreferences: {
+          partition: "open-orpheus",
+          preload: join(__dirname, "menu.js"),
+          additionalArguments: ["--submenu"],
+        },
+      });
+      this.submenuWindow = sub;
+
+      if (GUI_VITE_DEV_SERVER_URL) {
+        sub.loadURL(`${GUI_VITE_DEV_SERVER_URL}/menu`);
+      } else {
+        sub.loadURL("gui://frontend/menu");
+      }
+
+      sub.on("closed", () => {
+        if (this.submenuWindow === sub) this.submenuWindow = null;
+      });
+
+      sub.webContents.ipc.on(
+        "menu.reportSize",
+        (_event, width: number, height: number) => {
+          if (sub.isDestroyed()) return;
+          const { x: dx, y: dy, width: dw, height: dh } = subDisplay.workArea;
+          let x = screenX;
+          let y = screenY;
+          if (x + width > dx + dw) x = bounds.x - Math.round(width);
+          if (y + height > dy + dh) y = dy + dh - height;
+          if (x < dx) x = dx;
+          if (y < dy) y = dy;
+          sub.setBounds({
+            x: Math.round(x),
+            y: Math.round(y),
+            width: Math.round(width),
+            height: Math.round(height),
+          });
+          sub.showInactive();
+        }
+      );
+
+      sub.webContents.ipc.on(
+        "menu.itemClick",
+        (_event, menuId: string | null) => {
+          this.onClick?.(menuId);
+          this.close();
+          onMenuClose();
+        }
+      );
+
+      sub.webContents.ipc.on("menu.btnClick", (_event, btnId: string) => {
+        this.onClick?.(btnId);
+      });
+
+      sub.on("blur", () => {
+        setTimeout(() => {
+          // If focus went back to the main menu, keep open
+          if (!wnd.isDestroyed() && wnd.isFocused()) return;
+          if (!this.closed) {
+            this.close();
+            onMenuClose();
+          }
+        }, 100);
+      });
+
+      sub.webContents.ipc.handle("menu.pull", () => {
+        return { items, templates };
+      });
+    };
+
     const cleanup = () => {
       wnd.webContents.ipc.removeListener("menu.reportSize", onSizeReport);
       wnd.webContents.ipc.removeListener("menu.itemClick", onItemClick);
       wnd.webContents.ipc.removeListener("menu.btnClick", onBtnClick);
       wnd.webContents.ipc.removeListener("menu.close", onMenuClose);
+      wnd.webContents.ipc.removeAllListeners("menu.openSubmenu");
+      wnd.webContents.ipc.removeAllListeners("menu.closeSubmenu");
     };
 
     // Clean up any previous listeners
@@ -327,17 +435,43 @@ export default class AppMenu extends EventTarget {
     wnd.webContents.ipc.removeAllListeners("menu.itemClick");
     wnd.webContents.ipc.removeAllListeners("menu.btnClick");
     wnd.webContents.ipc.removeAllListeners("menu.close");
+    wnd.webContents.ipc.removeAllListeners("menu.openSubmenu");
+    wnd.webContents.ipc.removeAllListeners("menu.closeSubmenu");
+    wnd.removeAllListeners("blur");
 
     wnd.webContents.ipc.on("menu.reportSize", onSizeReport);
     wnd.webContents.ipc.on("menu.itemClick", onItemClick);
     wnd.webContents.ipc.on("menu.btnClick", onBtnClick);
     wnd.webContents.ipc.on("menu.close", onMenuClose);
+    wnd.webContents.ipc.on(
+      "menu.openSubmenu",
+      (_event, items, templates, relX, relY) => {
+        openSubmenuWindow(items, templates, relX, relY);
+      }
+    );
+    wnd.webContents.ipc.on("menu.closeSubmenu", closeSubmenuWindow);
 
-    wnd.on("blur", () => {
+    const blurCheck = () => {
+      // If focus moved to the submenu window, keep the menu open
+      if (
+        this.submenuWindow &&
+        !this.submenuWindow.isDestroyed() &&
+        this.submenuWindow.isFocused()
+      ) {
+        return;
+      }
+      // If the main window regained focus (e.g. brief WM focus shuffle), keep open
+      if (!wnd.isDestroyed() && wnd.isFocused()) {
+        return;
+      }
       if (!this.closed) {
         this.close();
         onMenuClose();
       }
+    };
+
+    wnd.on("blur", () => {
+      setTimeout(blurCheck, 100);
     });
 
     // Send data to renderer (it may still be loading, so we also handle a ready request)

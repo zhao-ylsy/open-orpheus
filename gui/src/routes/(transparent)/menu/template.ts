@@ -17,7 +17,6 @@ function aarrggbbToCss(c: string): string {
  * into structured BtnImages.
  */
 export function parseBtnUrl(url: string): BtnImages | null {
-  console.log(url);
   const stateRe = /(normalimage|hotimage|pushedimage|disabledimage)="([^"]*)"/g;
   const states: Record<string, BtnState> = {};
 
@@ -34,7 +33,6 @@ export function parseBtnUrl(url: string): BtnImages | null {
   }
 
   if (!states.normal) return null;
-  console.log(states);
   return {
     normal: states.normal,
     hot: states.hot,

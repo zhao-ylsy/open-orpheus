@@ -16,6 +16,14 @@ export interface MenuAPI {
   btnClick(btnId: string): void;
   close(): void;
   isWayland(): boolean;
+  isSubmenu(): boolean;
+  openSubmenu(
+    items: unknown[],
+    templates: Record<string, string>,
+    x: number,
+    y: number
+  ): void;
+  closeSubmenu(): void;
 }
 
 const isWaylandEnv = process.argv.includes("--wayland");
@@ -53,5 +61,19 @@ contextBridge.exposeInMainWorld("menuApi", {
   },
   isWayland() {
     return isWaylandEnv;
+  },
+  isSubmenu() {
+    return process.argv.includes("--submenu");
+  },
+  openSubmenu(
+    items: unknown[],
+    templates: Record<string, string>,
+    x: number,
+    y: number
+  ) {
+    ipcRenderer.send("menu.openSubmenu", items, templates, x, y);
+  },
+  closeSubmenu() {
+    ipcRenderer.send("menu.closeSubmenu");
   },
 } satisfies MenuAPI);

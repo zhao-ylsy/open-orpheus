@@ -13,6 +13,8 @@
   let hoveredIndex = $state(-1);
   let menuEl: HTMLDivElement | undefined = $state();
   let waylandMode = $state(false);
+  let rawTemplates: Record<string, string> = {};
+  let isSubmenuMode = false;
 
   // Submenu state
   let submenuItems: MenuItem[] | null = $state(null);
@@ -109,6 +111,7 @@
   onMount(() => {
     const api = getApi();
     waylandMode = api.isWayland();
+    isSubmenuMode = api.isSubmenu();
 
     if (waylandMode) {
       const cursor = setupCursorCapture();
@@ -132,8 +135,19 @@
       api.onUpdate((rawItems) => {
         items = rawItems as MenuItem[];
       });
+    } else if (isSubmenuMode) {
+      api.pull().then((data) => {
+        rawTemplates = data.templates;
+        loadTemplates(data.templates);
+        items = data.items as MenuItem[];
+        hoveredIndex = -1;
+        visible = true;
+        menuReady = true;
+        commitMenuPosition(api);
+      });
     } else {
       api.onShow((rawItems, templates, cx, cy) => {
+        rawTemplates = templates;
         loadTemplates(templates);
         items = rawItems as MenuItem[];
         hoveredIndex = -1;
@@ -166,29 +180,39 @@
 
   function handleItemHover(index: number, item: MenuItem, event: MouseEvent) {
     hoveredIndex = index;
-    if (item.menu && item.children?.length && menuEl) {
+    if (item.menu && item.children?.length) {
       const target = event.currentTarget as HTMLElement;
       const rect = target.getBoundingClientRect();
-      const menuRect = menuEl.getBoundingClientRect();
-      submenuX = waylandMode ? rect.right : menuRect.width;
-      submenuY = waylandMode ? rect.top : rect.top - menuRect.top;
-      submenuItems = item.children;
-      submenuParentIndex = index;
-      submenuHoveredIndex = -1;
+      if (waylandMode && menuEl) {
+        submenuX = rect.right;
+        submenuY = rect.top;
+        submenuItems = item.children;
+        submenuParentIndex = index;
+        submenuHoveredIndex = -1;
 
-      tick().then(() => {
-        if (!submenuEl) return;
-        const subRect = submenuEl.getBoundingClientRect();
-        const vw = window.innerWidth;
-        const vh = window.innerHeight;
-        if (waylandMode) {
+        tick().then(() => {
+          if (!submenuEl) return;
+          const subRect = submenuEl.getBoundingClientRect();
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
           if (submenuX + subRect.width > vw)
             submenuX = rect.left - subRect.width;
           if (submenuY + subRect.height > vh) submenuY = vh - subRect.height;
-        }
-      });
+        });
+      } else if (!isSubmenuMode && submenuParentIndex !== index) {
+        getApi().openSubmenu(
+          $state.snapshot(item.children),
+          rawTemplates,
+          rect.right,
+          rect.top
+        );
+        submenuParentIndex = index;
+      }
     } else {
       submenuItems = null;
+      if (!waylandMode && submenuParentIndex !== -1) {
+        getApi().closeSubmenu();
+      }
       submenuParentIndex = -1;
     }
   }
