@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { MenuItem, MenuItemBtn, LayoutNode } from "./types";
-  import { parseBtnUrl, getCachedTemplate, btnStateSrc } from "./template";
+  import { parseBtnUrl, getCachedTemplate } from "./template";
+  import IconButton from "$lib/components/IconButton.svelte";
 
   let {
     items,
@@ -23,10 +24,6 @@
     onitemleave?: (index: number) => void;
     onbtnclick?: (btn: MenuItemBtn) => void;
   } = $props();
-
-  // Panel-local btn interaction state
-  let hoveredBtnId: string | null = $state(null);
-  let pressedBtnId: string | null = $state(null);
 </script>
 
 {#snippet layoutNode(node: LayoutNode, btns: MenuItemBtn[])}
@@ -70,40 +67,20 @@
     {#if btn}
       {@const images = parseBtnUrl(btn.url)}
       {#if images}
-        <!-- svelte-ignore a11y_click_events_have_key_events -->
-        <div
+        <IconButton
+          normal={images.normal.uri}
+          hover={images.hot?.uri ?? images.normal.uri}
+          active={images.pushed?.uri ?? images.normal.uri}
+          disabled={!btn.enable
+            ? (images.disabled?.uri ?? images.normal.uri)
+            : undefined}
           class="flex shrink-0 items-center justify-center {btn.enable
             ? 'cursor-pointer'
-            : 'cursor-default opacity-40'}"
+            : 'cursor-default'}"
+          imgClass="size-full"
           style="width:{node.width}px;height:{node.height}px"
-          role="button"
-          tabindex="-1"
-          onmouseenter={() => {
-            if (btn.enable) hoveredBtnId = btn.id;
-          }}
-          onmouseleave={() => {
-            if (hoveredBtnId === btn.id) hoveredBtnId = null;
-            pressedBtnId = null;
-          }}
-          onmousedown={() => {
-            if (btn.enable) pressedBtnId = btn.id;
-          }}
-          onmouseup={() => {
-            pressedBtnId = null;
-          }}
           onclick={() => onbtnclick?.(btn)}
-        >
-          <img
-            style="width:{node.width}px;height:{node.height}px"
-            src={btnStateSrc(
-              images,
-              btn.enable,
-              hoveredBtnId === btn.id,
-              pressedBtnId === btn.id
-            )}
-            alt=""
-          />
-        </div>
+        />
       {/if}
     {/if}
   {/if}

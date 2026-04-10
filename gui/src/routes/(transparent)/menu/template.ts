@@ -117,16 +117,3 @@ export function loadTemplates(rawTemplates: Record<string, string>) {
 export function getCachedTemplate(style: string): ElementTemplate | null {
   return templateCache.get(style) ?? null;
 }
-
-/** Returns the appropriate image src for a btn given its parsed images and interaction state. */
-export function btnStateSrc(
-  images: BtnImages,
-  enable: boolean,
-  hovered: boolean,
-  pressed: boolean
-): string {
-  if (!enable && images.disabled) return images.disabled.uri;
-  if (pressed && images.pushed) return images.pushed.uri;
-  if (hovered && images.hot) return images.hot.uri;
-  return images.normal.uri;
-}
