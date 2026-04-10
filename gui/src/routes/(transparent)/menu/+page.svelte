@@ -143,9 +143,29 @@
         hoveredIndex = -1;
         visible = true;
         menuReady = true;
-        commitMenuPosition(api);
+        tick().then(() => {
+          if (!menuEl) return;
+          const ro = new ResizeObserver(() => {
+            if (!menuEl) return;
+            const rect = menuEl.getBoundingClientRect();
+            api.reportSize(Math.ceil(rect.width), Math.ceil(rect.height));
+          });
+          ro.observe(menuEl);
+        });
       });
     } else {
+      // Non-Wayland: use ResizeObserver to keep the window sized to the menu
+      let ro: ResizeObserver | null = null;
+      const startObserver = () => {
+        if (!menuEl || ro) return;
+        ro = new ResizeObserver(() => {
+          if (!menuEl) return;
+          const rect = menuEl.getBoundingClientRect();
+          api.reportSize(Math.ceil(rect.width), Math.ceil(rect.height));
+        });
+        ro.observe(menuEl);
+      };
+
       api.onShow((rawItems, templates, cx, cy) => {
         rawTemplates = templates;
         loadTemplates(templates);
@@ -158,6 +178,7 @@
         cursorX = cx;
         cursorY = cy;
         menuReady = true;
+        tick().then(startObserver);
         commitMenuPosition(api);
       });
 
