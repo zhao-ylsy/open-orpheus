@@ -122,13 +122,13 @@
 {/snippet}
 
 <div
-  class="absolute max-w-80 min-w-45 overflow-hidden rounded-lg border border-black/12 bg-white/98 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.15),0_1px_4px_rgba(0,0,0,0.1)] select-none"
+  class="absolute max-w-80 min-w-58 overflow-hidden rounded-lg border border-black/12 bg-white/98 py-1.5 shadow-[0_4px_16px_rgba(0,0,0,0.15),0_1px_4px_rgba(0,0,0,0.1)] select-none"
   bind:this={el}
   {style}
 >
   {#each items as item, i (i)}
     {#if item.separator}
-      <div class="mx-3 h-px bg-black/10"></div>
+      <div class="mx-3 my-2 h-px bg-black/10"></div>
     {:else if item.style && item.btns}
       {@render styledItem(item)}
     {:else}
@@ -144,7 +144,7 @@
       >
         {#if item.image_path}
           <img
-            class="size-4 shrink-0 {!item.enable ? 'opacity-40' : ''}"
+            class="size-5 shrink-0 {!item.enable ? 'opacity-40' : ''}"
             src={item.image_path}
             alt=""
           />
@@ -152,13 +152,13 @@
         <span class="flex-1">{item.text}</span>
         {#if item.check_image_path}
           <img
-            class="ml-auto size-4 shrink-0 {!item.enable ? 'opacity-40' : ''}"
+            class="ml-auto size-5 shrink-0 {!item.enable ? 'opacity-40' : ''}"
             src={item.check_image_path}
             alt=""
           />
         {:else if showSubmenuArrows && item.menu && item.children?.length}
           <img
-            class="ml-auto size-4 shrink-0 opacity-50"
+            class="ml-auto size-5 shrink-0 opacity-50"
             src="gui://skin/menu/sub_icon.svg"
             alt=""
           />
