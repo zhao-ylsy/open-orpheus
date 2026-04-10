@@ -255,6 +255,10 @@ export default class AppMenu extends EventTarget {
     wnd.webContents.ipc.on("menu.btnClick", onBtnClick);
     wnd.webContents.ipc.on("menu.close", onMenuClose);
 
+    wnd.on("blur", () => {
+      dismiss();
+    });
+
     // Pull-based: the renderer calls menu.pull once SvelteKit has mounted
     // and has registered its pointermove listener for cursor capture.
     // We show the window here so the compositor sends pointer-enter AFTER
