@@ -74,6 +74,10 @@
           disabled={!btn.enable
             ? (images.disabled?.uri ?? images.normal.uri)
             : undefined}
+          normalColor={images.normal.color}
+          hoverColor={images.hot?.color}
+          activeColor={images.pushed?.color}
+          disabledColor={images.disabled?.color}
           class="flex shrink-0 items-center justify-center {btn.enable
             ? 'cursor-pointer'
             : 'cursor-default'}"

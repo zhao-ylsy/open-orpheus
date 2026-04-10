@@ -3,12 +3,21 @@ import type { BtnImages, BtnState, LayoutNode, ElementTemplate } from "./types";
 // Template cache: style path → parsed template
 const templateCache = new Map<string, ElementTemplate>();
 
+/** Convert #AARRGGBB to CSS #RRGGBBAA. */
+function aarrggbbToCss(c: string): string {
+  if (c.length === 9 && c[0] === "#") {
+    return `#${c.slice(3)}${c.slice(1, 3)}`;
+  }
+  return c;
+}
+
 /**
  * Parse a DUI attribute string like:
  * normalimage="file='btn/play.svg' svg_color='#ff483228'" hotimage="..."
  * into structured BtnImages.
  */
 export function parseBtnUrl(url: string): BtnImages | null {
+  console.log(url);
   const stateRe = /(normalimage|hotimage|pushedimage|disabledimage)="([^"]*)"/g;
   const states: Record<string, BtnState> = {};
 
@@ -20,10 +29,12 @@ export function parseBtnUrl(url: string): BtnImages | null {
     if (!fileMatch) continue;
     const uri = fileMatch[1];
     const colorMatch = attrs.match(/svg_color='([^']*)'/);
-    states[key] = { uri, color: colorMatch?.[1] };
+    const color = colorMatch?.[1];
+    states[key] = { uri, color: color ? aarrggbbToCss(color) : undefined };
   }
 
   if (!states.normal) return null;
+  console.log(states);
   return {
     normal: states.normal,
     hot: states.hot,
