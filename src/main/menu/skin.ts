@@ -26,13 +26,21 @@ async function extractColor(img: SharpInput): Promise<string> {
   return `#${[r, g, b, a].map((v) => v.toString(16).padStart(2, "0")).join("")}`;
 }
 
-function abgrToCssHex(abgr: string): string {
-  const hex = abgr.replace(/^#/, "");
-  const a = hex.slice(0, 2);
-  const b = hex.slice(2, 4);
-  const g = hex.slice(4, 6);
-  const r = hex.slice(6, 8);
-  return `#${r}${g}${b}${a}`;
+/** Convert #AARRGGBB (ARGB) to CSS #RRGGBBAA. */
+function argbToCss(c: string): string {
+  if (c.length === 9 && c[0] === "#") {
+    // input: #AA RR GG BB  (indices 1-2, 3-4, 5-6, 7-8)
+    return `#${c.slice(3, 5)}${c.slice(5, 7)}${c.slice(7)}${c.slice(1, 3)}`;
+  }
+  return c;
+}
+
+function applyAlphaOverride(color: string, alphaDec?: string): string {
+  if (!alphaDec) return color;
+  const value = Number.parseInt(alphaDec, 10);
+  if (!Number.isFinite(value)) return color;
+  const alpha = Math.max(0, Math.min(255, value)).toString(16).padStart(2, "0");
+  return `${color.slice(0, 7)}${alpha}`;
 }
 
 export function registerMenuSkinUpdater() {
@@ -55,13 +63,23 @@ export function registerMenuSkinUpdater() {
     const fgDisabledMatch = xml.match(
       /\bdisabledtextcolor="(#[0-9A-Fa-f]{8})"/
     );
+    const fgAlphaMatch = xml.match(/\btranstext="(\d{1,3})"/);
+    const fgDisabledAlphaMatch = xml.match(/\bdisabletranstext="(\d{1,3})"/);
 
     menuSkin.background = bgColor;
     menuSkin.itemHover = hoverColor;
     menuSkin.separator = separatorColor;
-    if (fgMatch) menuSkin.foreground = abgrToCssHex(fgMatch[1]);
+    if (fgMatch) {
+      menuSkin.foreground = applyAlphaOverride(
+        argbToCss(fgMatch[1]),
+        fgAlphaMatch?.[1]
+      );
+    }
     if (fgDisabledMatch) {
-      menuSkin.foregroundDisabled = abgrToCssHex(fgDisabledMatch[1]);
+      menuSkin.foregroundDisabled = applyAlphaOverride(
+        argbToCss(fgDisabledMatch[1]),
+        fgDisabledAlphaMatch?.[1]
+      );
     }
   });
 }
