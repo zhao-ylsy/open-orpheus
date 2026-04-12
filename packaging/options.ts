@@ -30,7 +30,7 @@ export const deb: MakerDebConfig["options"] = {
 };
 
 export const flatpak: MakerFlatpakConfig["options"] = {
-  id: "io.yucling.open-orpheus",
+  id: "io.github.yucling.open-orpheus",
   productName: "Open Orpheus",
   description: "An open-source Netease Cloud Music client",
   files: [
