@@ -36,7 +36,7 @@ export const flatpak: MakerFlatpakConfig["options"] = {
   files: [
     [
       "assets/icon_256.png",
-      "/share/icons/hicolor/256x256/apps/io.yucling.open-orpheus.png",
+      "/share/icons/hicolor/256x256/apps/io.github.yucling.open-orpheus.png",
     ],
   ],
   icon: "assets/icon_256.png",
