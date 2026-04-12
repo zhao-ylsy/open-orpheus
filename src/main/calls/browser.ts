@@ -22,22 +22,24 @@ type FullCookie = {
   Url: string;
   Value: string;
 };
-registerCallHandler<[string], FullCookie[]>(
+registerCallHandler<[string], [FullCookie[]]>(
   "browser.getFullCookies",
   async (_, url) => {
-    return getFullCookies(url).map((cookie) => ({
-      Creation: cookie.createdAt,
-      Domain: cookie.domain,
-      Expires: cookie.expires?.valueOf(),
-      HasExpires: cookie.expires !== undefined ? 1 : 0,
-      Httponly: cookie.httpOnly ? 1 : 0,
-      LastAccess: cookie.lastAccessed,
-      Name: cookie.name,
-      Path: cookie.path,
-      Secure: cookie.secure ? 1 : 0,
-      Url: `${cookie.secure ? "https:" : "http:"}//${cookie.domain}${cookie.path}`,
-      Value: cookie.value,
-    }));
+    return [
+      getFullCookies(url).map((cookie) => ({
+        Creation: cookie.createdAt,
+        Domain: cookie.domain,
+        Expires: cookie.expires?.valueOf(),
+        HasExpires: cookie.expires !== undefined ? 1 : 0,
+        Httponly: cookie.httpOnly ? 1 : 0,
+        LastAccess: cookie.lastAccessed,
+        Name: cookie.name,
+        Path: cookie.path,
+        Secure: cookie.secure ? 1 : 0,
+        Url: `${cookie.secure ? "https:" : "http:"}//${cookie.domain}${cookie.path}`,
+        Value: cookie.value,
+      })),
+    ];
   }
 );
 
