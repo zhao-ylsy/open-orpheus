@@ -2,12 +2,9 @@ import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
-import SevenZip from "7z-wasm";
-
 import { pack as base } from "./folders";
-import Pack from "./packs/Pack";
-import WebPack from "./packs/WebPack";
-import SkinPack from "./packs/SkinPack";
+
+import type Pack from "./packs/Pack";
 
 import versions from "../../versions.json";
 
@@ -38,6 +35,7 @@ export class PackManager extends EventTarget {
 
   async loadWebPack() {
     const webPackPath = chooseWebPackFile();
+    const WebPack = await import("./packs/WebPack").then((m) => m.default);
     const wp = new WebPack(webPackPath);
     await wp.readPack();
     this.packs.set("web", wp);
@@ -45,6 +43,7 @@ export class PackManager extends EventTarget {
   }
 
   async loadSkinPack(name: string, name2: string) {
+    const SkinPack = await import("./packs/SkinPack").then((m) => m.default);
     const loadOne = async (
       packKey: "skin" | "skin2",
       packName: string,
@@ -144,7 +143,7 @@ export class PackManager extends EventTarget {
       });
     }
 
-    const sevenZip = await SevenZip();
+    const sevenZip = await import("7z-wasm").then((m) => m.default());
 
     const stream = sevenZip.FS.open("installer.exe", "w+");
     sevenZip.FS.write(stream, buf, 0, buf.length);

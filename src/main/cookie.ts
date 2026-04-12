@@ -1,4 +1,3 @@
-import { ipcMain } from "electron";
 import * as cookie from "cookie";
 import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
@@ -304,7 +303,3 @@ export function processSetCookie(
 
   void saveToFile(join(data, "cookies.dat"));
 }
-
-ipcMain.handle("cookie.getCookieHeader", (_, url: string) => {
-  return cookie.stringifyCookie(getCookies(url));
-});

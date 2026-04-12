@@ -1,12 +1,12 @@
-import { BrowserWindow, screen } from "electron";
-import { parseICO } from "icojs";
 import { resolve, join, normalize } from "node:path";
 import os from "node:os";
+
+import { BrowserWindow, screen } from "electron";
 
 export async function pngFromIco(
   icoData: ArrayBuffer | Buffer<ArrayBufferLike>
 ): Promise<ArrayBuffer> {
-  const images = await parseICO(icoData);
+  const images = await import("icojs").then((m) => m.parseICO(icoData));
   if (images.length === 0) {
     throw new Error("No images found in ICO file");
   }

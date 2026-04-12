@@ -1,5 +1,7 @@
-import { Menu, NativeImage, Tray } from "electron";
 import os from "node:os";
+
+import { Menu, NativeImage, Tray } from "electron";
+
 import { mainWindow } from "./window";
 
 let icon: NativeImage | null = null;

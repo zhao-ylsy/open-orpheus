@@ -11,30 +11,24 @@ import os from "node:os";
 import { mkdir } from "node:fs/promises";
 import started from "electron-squirrel-startup";
 
+// We want to hook Wayland connections as early as possible.
+import "@open-orpheus/window";
+
 import { onExit } from "@open-orpheus/lifecycle";
 
 // Handle errors as early as possible
 import "./main/error";
 
-// Orpheus scheme
-import registerOrpheusScheme from "./main/orpheus";
-
-// Channel module
-import "./main/channel";
-
-import createDesktopLyricsWindow from "./main/windows/desktop-lyrics";
 import { getWindowSizeStatus } from "./main/util";
-import { loadFromFile as loadCookiesFromFile } from "./main/cookie";
 import { data as dataDir, userdata as userdataDir } from "./main/folders";
 import { prepareDeviceId } from "./main/device";
 import { CORE_VERSION } from "./constants";
 import { initializeDatabases } from "./main/database";
 import packManager from "./main/pack";
-import WebPack from "./main/packs/WebPack";
-import registerGuiScheme from "./main/gui";
 import showPackgeDownloadWindow from "./main/windows/package-download";
-import registerAudioStreamerScheme from "./main/audioStreamer";
 import { setMainWindow } from "./main/window";
+
+import type WebPack from "./main/packs/WebPack";
 
 // This is flags is required because package window is shown before main window, and we don't want to quit the app when package window is closed for any reason.
 let appStarted = false;
@@ -163,6 +157,25 @@ app.on("ready", async () => {
     // Make sure data directory exists
     await mkdir(path.join(dataDir), { recursive: true });
 
+    try {
+      await packManager.loadWebPack();
+    } catch (e) {
+      console.warn("Failed to load web pack:", e);
+      await showPackgeDownloadWindow(); // If user cancelled, this will throw and skip the rest of initialization
+      await packManager.loadWebPack(); // Simply try loading again after download, it will throw if the package is still invalid
+    }
+
+    // Initialize schemes and get registrars
+    const [
+      registerOrpheusScheme,
+      registerGuiScheme,
+      registerAudioStreamerScheme,
+    ] = await Promise.all([
+      import("./main/orpheus").then((m) => m.default),
+      import("./main/gui").then((m) => m.default),
+      import("./main/audioStreamer").then((m) => m.default),
+    ]);
+
     const sess = session.fromPartition("open-orpheus");
 
     registerOrpheusScheme(protocol);
@@ -177,25 +190,23 @@ app.on("ready", async () => {
 
     initializeDatabases();
 
-    await prepareDeviceId();
-    await loadCookiesFromFile(path.join(dataDir, "cookies.dat"));
-
-    try {
-      await packManager.loadWebPack();
-    } catch (e) {
-      console.warn("Failed to load web pack:", e);
-      await showPackgeDownloadWindow(); // If user cancelled, this will throw and skip the rest of initialization
-      await packManager.loadWebPack(); // Simply try loading again after download, it will throw if the package is still invalid
-    }
-
-    await packManager.getPack<WebPack>("web").readPack();
-
-    createDesktopLyricsWindow();
-    createWindow();
+    await Promise.all([
+      import("./main/channel"),
+      prepareDeviceId(),
+      import("./main/cookie").then((m) =>
+        m.loadFromFile(path.join(dataDir, "cookies.dat"))
+      ),
+      packManager.getPack<WebPack>("web").readPack(),
+      import("./main/windows/desktop-lyrics").then((m) => {
+        m.default();
+      }),
+    ]);
 
     onExit(() => {
       app.quit(); // Graceful exit
     });
+
+    createWindow();
 
     appStarted = true;
   } catch (error) {

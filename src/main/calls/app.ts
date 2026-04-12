@@ -1,3 +1,5 @@
+import os from "node:os";
+
 import {
   app,
   BrowserWindow,
@@ -10,7 +12,6 @@ import {
 import { registerCallHandler } from "../calls";
 import { loadFromOrpheusUrl } from "../orpheus";
 import { pngFromIco } from "../util";
-import os from "node:os";
 import packManager from "../pack";
 import { stat } from "node:fs/promises";
 

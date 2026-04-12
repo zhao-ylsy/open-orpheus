@@ -1,11 +1,13 @@
+import { extname } from "node:path";
+import { readFile } from "node:fs/promises";
+
 import { Protocol } from "electron";
 import mime from "mime";
-import { extname } from "node:path";
+
 import packManager from "./pack";
 import WebPack from "./packs/WebPack";
 import { sanitizeRelativePath } from "./util";
 import { storage as storageDir, httpCache } from "./folders";
-import { readFile } from "node:fs/promises";
 import { URLCacheManager } from "./cache/URLCacheManager";
 
 export const urlCache = new URLCacheManager(httpCache);

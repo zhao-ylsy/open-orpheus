@@ -18,13 +18,13 @@ ipcMain.handle(
       dispatcher
         .dispatch(
           command,
-          (...args) => {
+          (...args: unknown[]) => {
             resolve(args);
           },
           event,
           ...params
         )
-        .then((result) => {
+        .then((result: unknown | false) => {
           if (result === false) {
             resolve(false); // No handler found for the command
           }

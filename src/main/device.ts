@@ -1,8 +1,9 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { data as dataDir } from "./folders";
 import { readFile, writeFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
+
+import { data as dataDir } from "./folders";
 
 const deviceIdFilePath = join(dataDir, "device_id.json");
 

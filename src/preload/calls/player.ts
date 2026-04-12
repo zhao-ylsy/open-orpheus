@@ -1,7 +1,8 @@
+import { ipcRenderer } from "electron";
+
 import { player } from "../audioplayer";
 import type { TextAlignType } from "../Player";
 import { registerCallHandler } from "../calls";
-import { ipcRenderer } from "electron";
 import { transformLyricStyle } from "../desktopLyrics";
 import { fireNativeCall } from "../channel";
 

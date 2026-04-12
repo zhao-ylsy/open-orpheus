@@ -89,7 +89,6 @@ function svelteKitPlugin(): Plugin {
       devProcess = runPackageManager([
         "run",
         "dev",
-        "--",
         "--port",
         String(SVELTEKIT_DEV_PORT),
       ]);
