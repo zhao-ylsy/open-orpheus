@@ -11,6 +11,9 @@
   import Database from "@lucide/svelte/icons/database";
   import Cache from "./Cache.svelte";
 
+  import Bug from "@lucide/svelte/icons/bug";
+  import Debug from "./Debug.svelte";
+
   const items = [
     {
       id: "package",
@@ -23,6 +26,12 @@
       name: "缓存",
       icon: Database,
       component: Cache,
+    },
+    {
+      id: "debug",
+      name: "调试",
+      icon: Bug,
+      component: Debug,
     },
   ];
 </script>

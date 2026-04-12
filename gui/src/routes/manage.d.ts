@@ -11,6 +11,9 @@ declare type AllCacheStats = {
 
 declare const orpheus: {
   getWebPackCommitHash: () => Promise<string>;
+
   getCacheStats: () => Promise<AllCacheStats>;
   clearCache: (category: "http" | "lyrics") => Promise<void>;
+
+  openGpuInfo: () => Promise<void>;
 };

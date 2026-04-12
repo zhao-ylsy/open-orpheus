@@ -88,4 +88,14 @@ export default function showManageWindow() {
       }
     }
   );
+
+  manageWnd.webContents.ipc.handle("manage.openGpuInfo", () => {
+    new BrowserWindow({
+      width: 800,
+      height: 600,
+      webPreferences: {
+        partition: "open-orpheus",
+      },
+    }).loadURL("chrome://gpu");
+  });
 }
